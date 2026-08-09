@@ -11,15 +11,24 @@ generation in production mode all pass.
 1. Sign up at **[neon.com](https://neon.com)** — the free tier is enough for a demo.
 2. Create a project. Name it `shiplane`, pick the region closest to your
    audience (`AWS ap-south-1 / Mumbai` for India).
-3. On the dashboard, copy the **Pooled connection** string. It looks like:
+3. Copy **both** connection strings from the dashboard. They differ only by
+   `-pooler` in the hostname:
 
    ```
-   postgresql://neondb_owner:npg_xxxx@ep-cool-name-pooler.ap-south-1.aws.neon.tech/neondb?sslmode=require
+   pooled  postgresql://neondb_owner:npg_xxxx@ep-cool-name-pooler.region.aws.neon.tech/neondb?sslmode=require
+   direct  postgresql://neondb_owner:npg_xxxx@ep-cool-name.region.aws.neon.tech/neondb?sslmode=require
    ```
 
-> Use the **pooled** string, not the direct one. Vercel runs each request in its
-> own serverless instance, and the direct endpoint will run out of connections
-> under even light demo traffic.
+> **You need both, and they are not interchangeable.**
+>
+> `DATABASE_URL` gets the **pooled** string — Vercel runs each request in its own
+> serverless instance, and the direct endpoint runs out of connections fast.
+>
+> `DIRECT_URL` gets the **direct** string — used by `prisma migrate` only. The
+> pooler runs PgBouncer in transaction mode, which cannot hold the session-level
+> advisory lock Migrate takes to stop two deploys migrating at once. Migrating
+> through the pooler fails with `P1002`, and worse, can leave that lock orphaned
+> on a pooler backend so later attempts fail too.
 
 ---
 
@@ -85,8 +94,12 @@ git push -u origin main
 
    | Name | Value |
    | --- | --- |
-   | `DATABASE_URL` | your Neon pooled connection string |
+   | `DATABASE_URL` | Neon **pooled** string (with `-pooler`) |
+   | `DIRECT_URL` | Neon **direct** string (no `-pooler`) |
    | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | your Maps key, or leave it out entirely |
+
+   `DIRECT_URL` is not optional. The build runs `prisma migrate deploy`, and
+   without it the deploy fails with `P1002`.
 
 4. Click **Deploy**.
 
@@ -160,8 +173,25 @@ The `postinstall` script is missing or was skipped. Confirm it is in
 `package.json` and redeploy with the build cache cleared.
 
 **Build fails on `prisma migrate deploy`**
-`DATABASE_URL` is missing or wrong in Vercel's environment variables. Check it
-is set for the **Production** environment specifically.
+`DATABASE_URL` or `DIRECT_URL` is missing or wrong in Vercel's environment
+variables. Check both are set for the **Production** environment specifically.
+
+**`P1002 — Timed out trying to acquire a postgres advisory lock`**
+A migration was attempted through the pooled endpoint. Two things to fix:
+
+1. Make sure `DIRECT_URL` is set to the **direct** (no `-pooler`) string.
+2. The failed attempt probably left the lock orphaned on a pooler backend, so
+   even a correct retry will fail. Clear it by running this against the
+   **direct** endpoint (Neon's SQL Editor works):
+
+   ```sql
+   SELECT pg_terminate_backend(pid) FROM pg_locks
+   WHERE locktype = 'advisory' AND objid = 72707369 AND granted;
+   ```
+
+   Then retry. Verify the schema really landed — `migrate deploy` can report
+   "No pending migrations" while the lock hangs, because the tables were in fact
+   created before it got stuck.
 
 **Pages load but every query errors, or connections run out**
 You used the direct Neon string instead of the pooled one. Swap it and redeploy.
