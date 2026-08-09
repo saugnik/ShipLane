@@ -1,103 +1,220 @@
-import Image from "next/image";
+import Link from "next/link";
+import {
+  ArrowUpRight,
+  Boxes,
+  IndianRupee,
+  PackagePlus,
+  Radar,
+  Truck,
+  Weight,
+} from "lucide-react";
+import { PageHeader } from "@/components/AppShell";
+import { StatusBadge } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/Button";
+import { Card, CardBody, CardHeader, EmptyState } from "@/components/ui/Card";
+import { prisma } from "@/lib/db";
+import { formatDate, formatINRCompact, formatKg, relativeTime } from "@/lib/utils";
 
-export default function Home() {
+// Counts and recent activity must reflect the booking that was just made.
+export const dynamic = "force-dynamic";
+
+async function loadDashboard() {
+  const [total, inTransit, delivered, aggregates, recent, carriers] = await Promise.all([
+    prisma.order.count(),
+    prisma.order.count({
+      where: { status: { in: ["PICKED_UP", "IN_TRANSIT", "REACHED_DESTINATION_HUB", "OUT_FOR_DELIVERY"] } },
+    }),
+    prisma.order.count({ where: { status: "DELIVERED" } }),
+    prisma.order.aggregate({ _sum: { grandTotal: true, chargedWeight: true } }),
+    prisma.order.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      include: { _count: { select: { boxes: true } } },
+    }),
+    prisma.partner.count({ where: { active: true } }),
+  ]);
+
+  return {
+    total,
+    inTransit,
+    delivered,
+    freight: aggregates._sum.grandTotal ?? 0,
+    weight: aggregates._sum.chargedWeight ?? 0,
+    recent,
+    carriers,
+  };
+}
+
+export default async function DashboardPage() {
+  const data = await loadDashboard();
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <>
+      <PageHeader
+        title="Freight console"
+        description="Everything moving right now, and what it is costing you."
+        action={
+          <div className="flex gap-2">
+            <ButtonLink href="/track" variant="secondary">
+              <Radar className="size-4" />
+              Track
+            </ButtonLink>
+            <ButtonLink href="/book">
+              <PackagePlus className="size-4" />
+              New booking
+            </ButtonLink>
+          </div>
+        }
+      />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Stat
+          icon={Boxes}
+          label="Consignments booked"
+          value={String(data.total)}
+          sub={`${data.carriers} carriers on panel`}
+        />
+        <Stat
+          icon={Truck}
+          label="In transit"
+          value={String(data.inTransit)}
+          sub={`${data.delivered} delivered to date`}
+          tone="brand"
+        />
+        <Stat
+          icon={Weight}
+          label="Chargeable weight"
+          value={formatKg(data.weight)}
+          sub="Across all bookings"
+        />
+        <Stat
+          icon={IndianRupee}
+          label="Freight spend"
+          value={formatINRCompact(data.freight)}
+          sub="Inclusive of GST"
+        />
+      </div>
+
+      <div className="mt-5">
+        <Card>
+          <CardHeader
+            title="Recent consignments"
+            description="The last eight bookings across every lane."
+            action={
+              <Link
+                href="/orders"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline"
+              >
+                View all
+                <ArrowUpRight className="size-3.5" />
+              </Link>
+            }
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          <CardBody className="p-0">
+            {data.recent.length === 0 ? (
+              <div className="p-5">
+                <EmptyState
+                  icon={PackagePlus}
+                  title="No consignments yet"
+                  description="Book your first shipment to generate an LR, box tags and a live tracking trail."
+                  action={<ButtonLink href="/book">Book a shipment</ButtonLink>}
+                />
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[820px] text-left text-sm">
+                  <thead className="border-b border-slate-200 bg-slate-50">
+                    <tr className="[&>th]:label-caps [&>th]:px-5 [&>th]:py-2.5">
+                      <th>LRN</th>
+                      <th>Lane</th>
+                      <th>Carrier</th>
+                      <th className="text-right">Boxes</th>
+                      <th className="text-right">Weight</th>
+                      <th className="text-right">Freight</th>
+                      <th>Status</th>
+                      <th className="text-right">ETA</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {data.recent.map((order) => (
+                      <tr key={order.id} className="transition-colors hover:bg-slate-50/70">
+                        <td className="px-5 py-3">
+                          <Link
+                            href={`/orders/${order.lrn}`}
+                            className="docnum font-semibold text-brand-700 hover:underline"
+                          >
+                            {order.lrn}
+                          </Link>
+                          <p className="text-[11px] text-slate-400">
+                            {relativeTime(order.createdAt)}
+                          </p>
+                        </td>
+                        <td className="px-5 py-3">
+                          <p className="font-medium text-slate-800">
+                            {order.pickupCity} → {order.dropCity}
+                          </p>
+                          <p className="text-[11px] text-slate-500">
+                            {order.pickupState} → {order.dropState}
+                          </p>
+                        </td>
+                        <td className="px-5 py-3 text-slate-700">{order.partnerName ?? "—"}</td>
+                        <td className="tnum px-5 py-3 text-right text-slate-700">
+                          {order._count.boxes}
+                        </td>
+                        <td className="tnum px-5 py-3 text-right text-slate-700">
+                          {formatKg(order.chargedWeight)}
+                        </td>
+                        <td className="tnum px-5 py-3 text-right font-semibold text-slate-900">
+                          {formatINRCompact(order.grandTotal)}
+                        </td>
+                        <td className="px-5 py-3">
+                          <StatusBadge status={order.status} />
+                        </td>
+                        <td className="px-5 py-3 text-right text-xs text-slate-600">
+                          {formatDate(order.etaDate)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardBody>
+        </Card>
+      </div>
+    </>
+  );
+}
+
+function Stat({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  tone = "neutral",
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  sub: string;
+  tone?: "neutral" | "brand";
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-card">
+      <div className="flex items-start justify-between">
+        <p className="label-caps">{label}</p>
+        <span
+          className={
+            tone === "brand"
+              ? "grid size-8 place-items-center rounded-lg bg-brand-50 text-brand-600"
+              : "grid size-8 place-items-center rounded-lg bg-slate-100 text-slate-500"
+          }
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <Icon className="size-4" />
+        </span>
+      </div>
+      <p className="tnum mt-2 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
+      <p className="mt-0.5 text-xs text-slate-500">{sub}</p>
     </div>
   );
 }

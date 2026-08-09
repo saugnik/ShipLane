@@ -18,6 +18,9 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // Prisma emits its client here on every `prisma generate`; it is build
+      // output, not source, and linting it is both slow and meaningless.
+      "src/generated/**",
     ],
   },
 ];

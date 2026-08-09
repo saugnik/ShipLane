@@ -1,0 +1,183 @@
+// ShipLane — B2B freight booking & LR generation
+// SQLite for local/demo. Swap `provider` to "postgresql" for production.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+// Prisma 7: the connection URL lives in prisma.config.ts for Migrate, and the
+// runtime connection comes from the driver adapter in src/lib/db.ts.
+datasource db {
+  provider = "postgresql"
+}
+
+/// A delivery partner (carrier) with its commercial configuration.
+model Partner {
+  id       String  @id @default(cuid())
+  code     String  @unique
+  name     String
+  tagline  String
+  accent   String // hex, used for the partner chip in the UI
+  active   Boolean @default(true)
+  modes    String // JSON string[]: ["ROAD","AIR","RAIL"]
+  services String // JSON string[]: ["SURFACE","EXPRESS"]
+
+  // Commercials
+  minChargeableWeight Float @default(10)
+  volumetricDivisor   Int   @default(5000)
+  fuelSurchargePct    Float @default(0)
+  docketCharge        Float @default(0)
+  fovPct              Float @default(0.1) // freight-on-value (carrier risk)
+  fovMin              Float @default(100)
+  odaCharge           Float @default(0)
+  codChargePct        Float @default(1.5)
+  codChargeMin        Float @default(50)
+  gstPct              Float @default(18)
+
+  rates  Rate[]
+  orders Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// A lane rate card row. "*" acts as a wildcard for state or city.
+/// The most specific matching row wins (city+state > state > wildcard).
+model Rate {
+  id          String  @id @default(cuid())
+  partner     Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId   String
+  originState String  @default("*")
+  originCity  String  @default("*")
+  destState   String  @default("*")
+  destCity    String  @default("*")
+  ratePerKg   Float
+  minCharge   Float
+  transitDays Int
+  oda         Boolean @default(false)
+
+  @@index([partnerId])
+  @@index([destState, destCity])
+}
+
+/// A booked shipment. One order == one LR (Lorry Receipt) == one LRN.
+model Order {
+  id   String @id @default(cuid())
+  lrn  String @unique // Lorry Receipt Number — the customer-facing tracking id
+  oid  String @unique // internal order id printed on box tags
+  mawb String @unique // master airway bill / master docket
+
+  status String @default("BOOKED")
+
+  // ---- Step 1: pickup (shipper) ----
+  pickupCompany  String
+  pickupProduct  String
+  pickupContact  String?
+  pickupEmail    String?
+  pickupPhone    String?
+  pickupAddress  String
+  pickupCity     String
+  pickupState    String
+  pickupPincode  String
+  pickupLandmark String?
+  pickupLat      Float?
+  pickupLng      Float?
+  pickupGstin    String?
+
+  // ---- Step 1: drop (consignee) ----
+  dropCompany String
+  dropProduct String
+  dropContact String?
+  dropEmail   String?
+  dropPhone   String?
+  dropAddress String
+  dropCity    String
+  dropState   String
+  dropPincode String
+  dropLat     Float?
+  dropLng     Float?
+  dropGstin   String?
+
+  // ---- Step 2: invoice ----
+  invoiceNumber String
+  invoiceAmount Float   @default(0)
+  ewayBill      String?
+
+  // ---- Step 3: shipment meta ----
+  mot                 String  @default("ROAD") // mode of transport
+  pickupType          String  @default("SELF_DROP")
+  deliveryType        String  @default("SELF_COLLECT")
+  freightPayment      String  @default("BTC")
+  invoiceValuePayment String  @default("PREPAID")
+  riskType            String  @default("OWNER") // OWNER | CARRIER
+  podOnInvoice        Boolean @default(false)
+  saidToContain       String
+  remarks             String?
+
+  // ---- Step 4: partner + frozen price breakup ----
+  partner     Partner? @relation(fields: [partnerId], references: [id])
+  partnerId   String?
+  partnerName String?
+  partnerCode String?
+
+  actualWeight     Float @default(0)
+  volumetricWeight Float @default(0)
+  chargedWeight    Float @default(0)
+  ratePerKg        Float @default(0)
+  freight          Float @default(0)
+  docketCharge     Float @default(0)
+  fuelSurcharge    Float @default(0)
+  fov              Float @default(0)
+  odaCharge        Float @default(0)
+  codCharge        Float @default(0)
+  subtotal         Float @default(0)
+  gstAmount        Float @default(0)
+  grandTotal       Float @default(0)
+  transitDays      Int   @default(0)
+
+  etaDate   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  boxes  Box[]
+  events TrackingEvent[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Box {
+  id          String  @id @default(cuid())
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId     String
+  boxNumber   Int
+  awb         String // per-box scannable barcode value
+  description String
+  referenceId String?
+  weightKg    Float
+  lengthCm    Float
+  widthCm     Float
+  heightCm    Float
+
+  @@unique([orderId, boxNumber])
+  @@index([orderId])
+}
+
+model TrackingEvent {
+  id        String   @id @default(cuid())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  status    String
+  location  String
+  remarks   String?
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+}
+
+/// Monotonic sequence source so LRN / OID / MAWB never collide.
+model Counter {
+  key   String @id
+  value Int    @default(0)
+}
