@@ -38,10 +38,10 @@ export function TrackingTimeline({
                     className={cn(
                       "grid size-6 shrink-0 place-items-center rounded-full ring-4 transition-colors",
                       current
-                        ? "bg-brand-600 text-white ring-brand-100"
+                        ? "bg-brand-600 text-white ring-brand-500/20"
                         : done
-                          ? "bg-emerald-500 text-white ring-emerald-100"
-                          : "bg-slate-200 text-slate-400 ring-slate-100",
+                          ? "bg-emerald-500 text-white ring-emerald-500/20"
+                          : "bg-line-soft text-ink-4 ring-line-soft",
                     )}
                   >
                     {current ? (
@@ -54,7 +54,7 @@ export function TrackingTimeline({
                     <span
                       className={cn(
                         "h-0.5 flex-1",
-                        i < reachedIndex ? "bg-emerald-400" : "bg-slate-200",
+                        i < reachedIndex ? "bg-emerald-400" : "bg-line-soft",
                       )}
                     />
                   )}
@@ -62,7 +62,7 @@ export function TrackingTimeline({
                 <span
                   className={cn(
                     "pr-3 text-[11px] leading-tight font-semibold",
-                    current ? "text-brand-700" : done ? "text-slate-700" : "text-slate-400",
+                    current ? "text-brand-600 dark:text-brand-300" : done ? "text-ink-2" : "text-ink-4",
                   )}
                 >
                   {STATUS_LABEL[stage]}
@@ -74,25 +74,25 @@ export function TrackingTimeline({
       )}
 
       {derailed && (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+        <div className="rounded-lg border border-rose-500/25 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300">
           This consignment is marked <span className="font-semibold">{STATUS_LABEL[status]}</span>.
           See the scan log below for the reason.
         </div>
       )}
 
-      <ol className="relative flex flex-col gap-5 border-l border-slate-200 pl-5">
+      <ol className="relative flex flex-col gap-5 border-l border-line pl-5">
         {events.map((event, i) => (
           <li key={`${event.status}-${i}`} className="relative">
             <span
               className={cn(
                 "absolute top-1 -left-[26px] size-2.5 rounded-full ring-4 ring-white",
-                i === 0 ? "bg-brand-600" : "bg-slate-300",
+                i === 0 ? "bg-brand-600" : "bg-line-strong",
               )}
             />
-            <p className="text-sm font-semibold text-slate-900">
+            <p className="text-sm font-semibold text-ink">
               {STATUS_LABEL[event.status] ?? event.status}
             </p>
-            <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">
+            <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-ink-3">
               <span className="inline-flex items-center gap-1">
                 <MapPin className="size-3" />
                 {event.location}
@@ -100,10 +100,10 @@ export function TrackingTimeline({
               <span aria-hidden>·</span>
               <span>{formatDateTime(event.createdAt)}</span>
             </p>
-            {event.remarks && <p className="mt-1 text-xs text-slate-600">{event.remarks}</p>}
+            {event.remarks && <p className="mt-1 text-xs text-ink-2">{event.remarks}</p>}
           </li>
         ))}
-        {events.length === 0 && <li className="text-sm text-slate-500">No scans recorded yet.</li>}
+        {events.length === 0 && <li className="text-sm text-ink-3">No scans recorded yet.</li>}
       </ol>
     </div>
   );

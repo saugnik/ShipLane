@@ -167,7 +167,7 @@ export function BookingWizard() {
       <Stepper current={step} onJump={goTo} reachable={(s) => canReach(s, state)} />
 
       {restored && step === "route" && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-brand-200 bg-brand-50 px-4 py-2.5 text-xs text-brand-900">
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-brand-500/25 bg-brand-500/10 px-4 py-2.5 text-xs text-brand-700 dark:text-brand-200">
           <span className="flex items-center gap-2">
             <RotateCcw className="size-3.5" />
             Restored your unsaved draft from this session.
@@ -175,7 +175,7 @@ export function BookingWizard() {
           <button
             type="button"
             onClick={reset}
-            className="shrink-0 font-semibold text-brand-700 hover:underline"
+            className="shrink-0 font-semibold text-brand-600 dark:text-brand-300 hover:underline"
           >
             Start fresh
           </button>
@@ -199,7 +199,7 @@ export function BookingWizard() {
                 clearErrorsFor("pickup.");
               }}
             />
-            <div className="border-t border-slate-200 pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
+            <div className="border-t border-line pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
               <PartyForm
                 side="drop"
                 value={state.drop}
@@ -258,20 +258,20 @@ export function BookingWizard() {
       {step === "review" && <StepReview state={state} quote={quote} onEdit={goTo} />}
 
       {submitError && (
-        <div className="flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+        <div className="flex items-start gap-2.5 rounded-lg border border-rose-500/25 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300">
           <TriangleAlert className="mt-0.5 size-4 shrink-0" />
           <p>{submitError}</p>
         </div>
       )}
 
       {/* Action bar */}
-      <div className="no-print sticky bottom-0 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white/90 px-4 py-3 shadow-lift backdrop-blur">
+      <div className="no-print sticky bottom-0 flex items-center justify-between gap-3 rounded-xl border border-line bg-surface/90 px-4 py-3 shadow-md backdrop-blur">
         <Button variant="ghost" onClick={onBack} disabled={index === 0 || submitting}>
           <ArrowLeft className="size-4" />
           Back
         </Button>
 
-        <p className="hidden text-xs text-slate-500 sm:block">
+        <p className="hidden text-xs text-ink-3 sm:block">
           Step {index + 1} of {STEPS.length} · {STEPS[index].hint}
         </p>
 

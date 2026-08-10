@@ -8,25 +8,34 @@ type Variant = "primary" | "secondary" | "ghost" | "danger" | "outline";
 type Size = "sm" | "md" | "lg";
 
 const VARIANTS: Record<Variant, string> = {
+  // The inset highlight gives the filled button a slight lift without a gradient.
   primary:
-    "bg-brand-600 text-white shadow-card hover:bg-brand-700 active:bg-brand-800 disabled:bg-brand-300",
+    "bg-brand-600 text-white shadow-sm shadow-brand-600/25 ring-1 ring-inset ring-white/10 " +
+    "hover:bg-brand-500 active:bg-brand-700 disabled:bg-brand-600/40 disabled:shadow-none",
   secondary:
-    "bg-white text-slate-800 ring-1 ring-slate-200 shadow-card hover:bg-slate-50 active:bg-slate-100 disabled:text-slate-400",
+    "bg-surface text-ink ring-1 ring-inset ring-line-strong shadow-xs " +
+    "hover:bg-sunken active:bg-inset disabled:text-ink-4",
   outline:
-    "bg-transparent text-brand-700 ring-1 ring-brand-200 hover:bg-brand-50 active:bg-brand-100 disabled:text-brand-300",
-  ghost: "bg-transparent text-slate-600 hover:bg-slate-100 active:bg-slate-200 disabled:text-slate-300",
-  danger: "bg-rose-600 text-white shadow-card hover:bg-rose-700 active:bg-rose-800 disabled:bg-rose-300",
+    "bg-transparent text-brand-600 ring-1 ring-inset ring-brand-500/35 " +
+    "hover:bg-brand-500/8 active:bg-brand-500/14 disabled:text-brand-500/40 dark:text-brand-300",
+  ghost:
+    "bg-transparent text-ink-2 hover:bg-inset hover:text-ink active:bg-line-soft disabled:text-ink-4",
+  danger:
+    "bg-rose-600 text-white shadow-sm shadow-rose-600/25 ring-1 ring-inset ring-white/10 " +
+    "hover:bg-rose-500 active:bg-rose-700 disabled:bg-rose-600/40",
 };
 
 const SIZES: Record<Size, string> = {
   sm: "h-8 px-3 text-xs gap-1.5 rounded-lg",
-  md: "h-10 px-4 text-sm gap-2 rounded-lg",
-  lg: "h-12 px-6 text-sm gap-2 rounded-xl",
+  md: "h-9.5 px-4 text-[13px] gap-2 rounded-[10px]",
+  lg: "h-11 px-5 text-sm gap-2 rounded-xl",
 };
 
 const base =
-  "inline-flex items-center justify-center font-semibold transition-colors select-none " +
-  "disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600";
+  "relative inline-flex items-center justify-center font-semibold select-none " +
+  "transition-[background-color,box-shadow,transform,color] duration-150 active:scale-[0.985] " +
+  "disabled:cursor-not-allowed disabled:active:scale-100 " +
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500";
 
 type CommonProps = {
   variant?: Variant;
@@ -69,5 +78,41 @@ export function ButtonLink({
     <Link href={href} className={cn(base, VARIANTS[variant], SIZES[size], className)} {...rest}>
       {children}
     </Link>
+  );
+}
+
+/** Square icon-only button — used in table rows and toolbars. */
+export function IconButton({
+  label,
+  className,
+  children,
+  tone = "neutral",
+  ...rest
+}: {
+  label: string;
+  className?: string;
+  children: React.ReactNode;
+  tone?: "neutral" | "danger" | "brand";
+} & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const tones = {
+    neutral: "text-ink-3 hover:bg-inset hover:text-ink",
+    brand: "text-ink-3 hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-300",
+    danger: "text-ink-3 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400",
+  } as const;
+
+  return (
+    <button
+      type="button"
+      title={label}
+      className={cn(
+        "grid size-8 place-items-center rounded-lg transition-colors disabled:opacity-40 disabled:hover:bg-transparent",
+        tones[tone],
+        className,
+      )}
+      {...rest}
+    >
+      {children}
+      <span className="sr-only">{label}</span>
+    </button>
   );
 }

@@ -251,7 +251,7 @@ export function StepCargo({
 
         <CardBody className="p-0">
           {/* Column headers — desktop only; each card repeats its labels on mobile. */}
-          <div className="hidden grid-cols-[68px_1.4fr_1fr_86px_repeat(3,62px)_104px_40px] gap-2 border-b border-slate-200 bg-slate-50 px-5 py-2.5 lg:grid">
+          <div className="hidden grid-cols-[68px_1.4fr_1fr_86px_repeat(3,62px)_104px_40px] gap-2 border-b border-line bg-sunken px-5 py-2.5 lg:grid">
             {[
               "Box qty",
               "Product description",
@@ -269,7 +269,7 @@ export function StepCargo({
             ))}
           </div>
 
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-line-soft">
             {boxes.map((box, i) => (
               <BoxRow
                 key={box.key}
@@ -286,7 +286,7 @@ export function StepCargo({
           </div>
 
           {errors["boxes"] && (
-            <p className="border-t border-rose-200 bg-rose-50 px-5 py-2.5 text-xs font-medium text-rose-700">
+            <p className="border-t border-rose-500/25 bg-rose-500/10 px-5 py-2.5 text-xs font-medium text-rose-700 dark:text-rose-300">
               {errors["boxes"]}
             </p>
           )}
@@ -338,7 +338,7 @@ function Summary({
       <p
         className={cn(
           "tnum text-sm font-semibold",
-          emphasis ? "text-brand-700" : "text-slate-800",
+          emphasis ? "text-brand-600 dark:text-brand-300" : "text-ink",
         )}
       >
         {value}
@@ -385,7 +385,7 @@ function BoxRow({
         onChange={(e) => onChange({ [field]: e.target.value } as Partial<BoxForm>)}
         {...props}
       />
-      {err(field) && <span className="text-[11px] font-medium text-rose-600">{err(field)}</span>}
+      {err(field) && <span className="text-[11px] font-medium text-rose-600 dark:text-rose-400">{err(field)}</span>}
     </div>
   );
 
@@ -393,7 +393,7 @@ function BoxRow({
     <div
       className={cn(
         "grid grid-cols-2 gap-3 px-5 py-4 sm:grid-cols-3 lg:grid-cols-[68px_1.4fr_1fr_86px_repeat(3,62px)_104px_40px] lg:items-start lg:gap-2",
-        hasError && "bg-rose-50/40",
+        hasError && "bg-rose-500/5",
       )}
     >
       {cell("Box qty", "quantity", {
@@ -418,10 +418,10 @@ function BoxRow({
       {/* Derived, read-only: per-carton volumetric and the line total. */}
       <div className="col-span-2 flex flex-col justify-center sm:col-span-3 lg:col-span-1 lg:pt-2">
         <span className="label-caps lg:hidden">Volumetric</span>
-        <span className="tnum text-sm font-semibold text-slate-800">
+        <span className="tnum text-sm font-semibold text-ink">
           {line.lineVolumetric.toFixed(2)} kg
         </span>
-        <span className="tnum text-[11px] text-slate-500">
+        <span className="tnum text-[11px] text-ink-3">
           {line.perCarton.toFixed(2)} × {line.qty || 0}
         </span>
       </div>
@@ -431,7 +431,7 @@ function BoxRow({
           type="button"
           onClick={onDuplicate}
           title="Duplicate this line"
-          className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          className="rounded-md p-1.5 text-ink-4 transition-colors hover:bg-inset hover:text-ink-2"
         >
           <Copy className="size-4" />
           <span className="sr-only">Duplicate line {index + 1}</span>
@@ -441,7 +441,7 @@ function BoxRow({
           onClick={onRemove}
           disabled={!canRemove}
           title={canRemove ? "Remove this line" : "A consignment needs at least one line"}
-          className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+          className="rounded-md p-1.5 text-ink-4 transition-colors hover:bg-rose-500/10 hover:text-rose-600 dark:text-rose-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-ink-4"
         >
           <Trash2 className="size-4" />
           <span className="sr-only">Remove line {index + 1}</span>

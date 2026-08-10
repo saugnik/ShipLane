@@ -28,7 +28,7 @@ export default async function PartnerPage({ params }: { params: Params }) {
     <>
       <Link
         href="/partners"
-        className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800"
+        className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-ink-3 hover:text-ink"
       >
         <ArrowLeft className="size-3.5" />
         All carriers

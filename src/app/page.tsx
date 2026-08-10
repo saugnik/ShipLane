@@ -5,6 +5,7 @@ import {
   IndianRupee,
   PackagePlus,
   Radar,
+  TrendingUp,
   Truck,
   Weight,
 } from "lucide-react";
@@ -13,24 +14,22 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader, EmptyState } from "@/components/ui/Card";
 import { prisma } from "@/lib/db";
-import { formatDate, formatINRCompact, formatKg, relativeTime } from "@/lib/utils";
+import { cn, formatDate, formatINRCompact, formatKg, relativeTime } from "@/lib/utils";
 
 // Counts and recent activity must reflect the booking that was just made.
 export const dynamic = "force-dynamic";
 
+const MOVING = ["PICKED_UP", "IN_TRANSIT", "REACHED_DESTINATION_HUB", "OUT_FOR_DELIVERY"];
+
 async function loadDashboard() {
-  const [total, inTransit, delivered, aggregates, recent, carriers] = await Promise.all([
+  const [total, inTransit, delivered, aggregates, recent, carriers, byStatus] = await Promise.all([
     prisma.order.count(),
-    prisma.order.count({
-      where: { status: { in: ["PICKED_UP", "IN_TRANSIT", "REACHED_DESTINATION_HUB", "OUT_FOR_DELIVERY"] } },
-    }),
+    prisma.order.count({ where: { status: { in: MOVING } } }),
     prisma.order.count({ where: { status: "DELIVERED" } }),
-    prisma.order.aggregate({ _sum: { grandTotal: true, chargedWeight: true } }),
-    prisma.order.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 8,
-    }),
+    prisma.order.aggregate({ _sum: { grandTotal: true, chargedWeight: true, totalBoxes: true } }),
+    prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
     prisma.partner.count({ where: { active: true } }),
+    prisma.order.groupBy({ by: ["partnerName"], _count: { _all: true }, _sum: { grandTotal: true } }),
   ]);
 
   return {
@@ -39,17 +38,23 @@ async function loadDashboard() {
     delivered,
     freight: aggregates._sum.grandTotal ?? 0,
     weight: aggregates._sum.chargedWeight ?? 0,
+    cartons: aggregates._sum.totalBoxes ?? 0,
     recent,
     carriers,
+    byStatus: byStatus
+      .filter((r) => r.partnerName)
+      .sort((a, b) => (b._sum.grandTotal ?? 0) - (a._sum.grandTotal ?? 0)),
   };
 }
 
 export default async function DashboardPage() {
-  const data = await loadDashboard();
+  const d = await loadDashboard();
+  const topSpend = d.byStatus[0]?._sum.grandTotal ?? 0;
 
   return (
     <>
       <PageHeader
+        eyebrow="Overview"
         title="Freight console"
         description="Everything moving right now, and what it is costing you."
         action={
@@ -69,40 +74,41 @@ export default async function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat
           icon={Boxes}
-          label="Consignments booked"
-          value={String(data.total)}
-          sub={`${data.carriers} carriers on panel`}
+          label="Consignments"
+          value={String(d.total)}
+          sub={`${d.cartons.toLocaleString("en-IN")} cartons manifested`}
         />
         <Stat
           icon={Truck}
           label="In transit"
-          value={String(data.inTransit)}
-          sub={`${data.delivered} delivered to date`}
-          tone="brand"
+          value={String(d.inTransit)}
+          sub={`${d.delivered} delivered to date`}
+          accent
+          progress={d.total ? d.inTransit / d.total : 0}
         />
         <Stat
           icon={Weight}
           label="Chargeable weight"
-          value={formatKg(data.weight)}
-          sub="Across all bookings"
+          value={formatKg(d.weight)}
+          sub="Billed across all bookings"
         />
         <Stat
           icon={IndianRupee}
           label="Freight spend"
-          value={formatINRCompact(data.freight)}
-          sub="Inclusive of GST"
+          value={formatINRCompact(d.freight)}
+          sub={`${d.carriers} carriers on panel`}
         />
       </div>
 
-      <div className="mt-5">
-        <Card>
+      <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_320px]">
+        <Card className="min-w-0">
           <CardHeader
             title="Recent consignments"
             description="The last eight bookings across every lane."
             action={
               <Link
                 href="/orders"
-                className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline"
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-brand-600 transition-colors hover:bg-brand-500/10 dark:text-brand-300"
               >
                 View all
                 <ArrowUpRight className="size-3.5" />
@@ -110,7 +116,7 @@ export default async function DashboardPage() {
             }
           />
           <CardBody className="p-0">
-            {data.recent.length === 0 ? (
+            {d.recent.length === 0 ? (
               <div className="p-5">
                 <EmptyState
                   icon={PackagePlus}
@@ -121,9 +127,9 @@ export default async function DashboardPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[820px] text-left text-sm">
-                  <thead className="border-b border-slate-200 bg-slate-50">
-                    <tr className="[&>th]:label-caps [&>th]:px-5 [&>th]:py-2.5">
+                <table className="w-full min-w-[760px] text-left text-[13px]">
+                  <thead>
+                    <tr className="border-b border-line [&>th]:label-caps [&>th]:px-5 [&>th]:py-2.5">
                       <th>LRN</th>
                       <th>Lane</th>
                       <th>Carrier</th>
@@ -131,52 +137,87 @@ export default async function DashboardPage() {
                       <th className="text-right">Weight</th>
                       <th className="text-right">Freight</th>
                       <th>Status</th>
-                      <th className="text-right">ETA</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {data.recent.map((order) => (
-                      <tr key={order.id} className="transition-colors hover:bg-slate-50/70">
+                  <tbody>
+                    {d.recent.map((order) => (
+                      <tr
+                        key={order.id}
+                        className="border-b border-line-soft transition-colors last:border-0 hover:bg-sunken"
+                      >
                         <td className="px-5 py-3">
                           <Link
                             href={`/orders/${order.lrn}`}
-                            className="docnum font-semibold text-brand-700 hover:underline"
+                            className="docnum text-[13px] font-semibold text-brand-600 hover:underline dark:text-brand-300"
                           >
                             {order.lrn}
                           </Link>
-                          <p className="text-[11px] text-slate-400">
+                          <p className="mt-0.5 text-[11px] text-ink-4">
                             {relativeTime(order.createdAt)}
                           </p>
                         </td>
                         <td className="px-5 py-3">
-                          <p className="font-medium text-slate-800">
-                            {order.pickupCity} → {order.dropCity}
+                          <p className="font-medium text-ink">
+                            {order.pickupCity} <span className="text-ink-4">→</span> {order.dropCity}
                           </p>
-                          <p className="text-[11px] text-slate-500">
-                            {order.pickupState} → {order.dropState}
+                          <p className="mt-0.5 text-[11px] text-ink-4">
+                            ETA {formatDate(order.etaDate)}
                           </p>
                         </td>
-                        <td className="px-5 py-3 text-slate-700">{order.partnerName ?? "—"}</td>
-                        <td className="tnum px-5 py-3 text-right text-slate-700">
-                          {order.totalBoxes}
-                        </td>
-                        <td className="tnum px-5 py-3 text-right text-slate-700">
+                        <td className="px-5 py-3 text-ink-2">{order.partnerName ?? "—"}</td>
+                        <td className="tnum px-5 py-3 text-right text-ink-2">{order.totalBoxes}</td>
+                        <td className="tnum px-5 py-3 text-right text-ink-2">
                           {formatKg(order.chargedWeight)}
                         </td>
-                        <td className="tnum px-5 py-3 text-right font-semibold text-slate-900">
+                        <td className="tnum px-5 py-3 text-right font-semibold text-ink">
                           {formatINRCompact(order.grandTotal)}
                         </td>
                         <td className="px-5 py-3">
                           <StatusBadge status={order.status} />
-                        </td>
-                        <td className="px-5 py-3 text-right text-xs text-slate-600">
-                          {formatDate(order.etaDate)}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+            )}
+          </CardBody>
+        </Card>
+
+        {/* Carrier spend — a simple bar chart reads faster than a table here. */}
+        <Card className="min-w-0">
+          <CardHeader icon={TrendingUp} title="Spend by carrier" description="Freight billed, all time." />
+          <CardBody className="flex flex-col gap-4">
+            {d.byStatus.length === 0 ? (
+              <p className="py-6 text-center text-xs text-ink-3">
+                Book a consignment to see carrier spend.
+              </p>
+            ) : (
+              d.byStatus.map((row) => {
+                const value = row._sum.grandTotal ?? 0;
+                const pct = topSpend > 0 ? Math.max(3, (value / topSpend) * 100) : 0;
+                return (
+                  <div key={row.partnerName}>
+                    <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                      <span className="truncate text-xs font-medium text-ink-2">
+                        {row.partnerName}
+                      </span>
+                      <span className="tnum shrink-0 text-xs font-semibold text-ink">
+                        {formatINRCompact(value)}
+                      </span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-inset">
+                      <div
+                        className="h-full rounded-full bg-brand-500 transition-[width] duration-500"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <p className="mt-1 text-[11px] text-ink-4">
+                      {row._count._all} consignment{row._count._all === 1 ? "" : "s"}
+                    </p>
+                  </div>
+                );
+              })
             )}
           </CardBody>
         </Card>
@@ -190,30 +231,45 @@ function Stat({
   label,
   value,
   sub,
-  tone = "neutral",
+  accent,
+  progress,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
   sub: string;
-  tone?: "neutral" | "brand";
+  accent?: boolean;
+  progress?: number;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-card">
-      <div className="flex items-start justify-between">
+    <div className="group relative overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-sm transition-shadow hover:shadow-md">
+      <div className="flex items-start justify-between gap-3">
         <p className="label-caps">{label}</p>
         <span
-          className={
-            tone === "brand"
-              ? "grid size-8 place-items-center rounded-lg bg-brand-50 text-brand-600"
-              : "grid size-8 place-items-center rounded-lg bg-slate-100 text-slate-500"
-          }
+          className={cn(
+            "grid size-8 shrink-0 place-items-center rounded-[10px] ring-1 ring-inset transition-colors",
+            accent
+              ? "bg-brand-500/10 text-brand-600 ring-brand-500/15 dark:text-brand-300"
+              : "bg-inset text-ink-3 ring-line-soft",
+          )}
         >
           <Icon className="size-4" />
         </span>
       </div>
-      <p className="tnum mt-2 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
-      <p className="mt-0.5 text-xs text-slate-500">{sub}</p>
+
+      <p className="tnum mt-3 text-[26px] leading-none font-bold tracking-[-0.03em] text-ink">
+        {value}
+      </p>
+      <p className="mt-2 text-xs text-ink-3">{sub}</p>
+
+      {typeof progress === "number" && (
+        <div className="mt-3 h-1 overflow-hidden rounded-full bg-inset">
+          <div
+            className="h-full rounded-full bg-brand-500"
+            style={{ width: `${Math.round(progress * 100)}%` }}
+          />
+        </div>
+      )}
     </div>
   );
 }

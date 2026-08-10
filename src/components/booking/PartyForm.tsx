@@ -67,14 +67,14 @@ export function PartyForm({ side, value, onChange, errors }: Props) {
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2.5">
         <span className={`size-2 rounded-full ${copy.accent}`} aria-hidden />
-        <h3 className="text-sm font-semibold text-slate-900">{copy.title}</h3>
+        <h3 className="text-sm font-semibold text-ink">{copy.title}</h3>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={copy.companyLabel} required error={err("company")}>
           {({ id, invalid, describedBy }) => (
             <div className="relative">
-              <Building2 className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+              <Building2 className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-4" />
               <Input
                 id={id}
                 invalid={invalid}
@@ -91,7 +91,7 @@ export function PartyForm({ side, value, onChange, errors }: Props) {
         <Field label={copy.productLabel} required error={err("product")}>
           {({ id, invalid, describedBy }) => (
             <div className="relative">
-              <PackageOpen className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+              <PackageOpen className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-4" />
               <Input
                 id={id}
                 invalid={invalid}
@@ -149,7 +149,7 @@ export function PartyForm({ side, value, onChange, errors }: Props) {
         </Field>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4">
+      <div className="rounded-lg border border-line bg-sunken p-4">
         <Field label={copy.addressLabel} required error={err("address")}>
           {({ id, invalid, describedBy }) => (
             <div className="flex flex-col gap-2.5">

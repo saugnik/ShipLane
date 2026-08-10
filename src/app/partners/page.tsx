@@ -43,7 +43,7 @@ export default async function PartnersPage() {
                 action={
                   <Link
                     href={`/partners/${partner.id}`}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300 hover:underline"
                   >
                     Rate card
                     <ArrowUpRight className="size-3.5" />

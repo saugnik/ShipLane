@@ -68,12 +68,12 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
       <Card>
         {/* Plain GET form — filtering keeps working with JS disabled and the
             resulting URL is shareable. */}
-        <form className="flex flex-wrap items-end gap-3 border-b border-slate-200 p-4" action="/orders">
+        <form className="flex flex-wrap items-end gap-3 border-b border-line p-4" action="/orders">
           <div className="relative min-w-56 flex-1">
             <label htmlFor="q" className="label-caps mb-1 block">
               Search
             </label>
-            <Search className="pointer-events-none absolute bottom-3 left-3 size-4 text-slate-400" />
+            <Search className="pointer-events-none absolute bottom-3 left-3 size-4 text-ink-4" />
             <Input
               id="q"
               name="q"
@@ -103,7 +103,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
           {(q || status) && (
             <Link
               href="/orders"
-              className="pb-2.5 text-xs font-semibold text-slate-500 hover:text-slate-800"
+              className="pb-2.5 text-xs font-semibold text-ink-3 hover:text-ink"
             >
               Clear
             </Link>
@@ -127,7 +127,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[900px] text-left text-sm">
-                <thead className="border-b border-slate-200 bg-slate-50">
+                <thead className="border-b border-line bg-sunken">
                   <tr className="[&>th]:label-caps [&>th]:px-5 [&>th]:py-2.5">
                     <th>LRN / docket</th>
                     <th>Lane</th>
@@ -140,39 +140,39 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                     <th className="text-right">Documents</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-line-soft">
                   {orders.map((order) => (
-                    <tr key={order.id} className="transition-colors hover:bg-slate-50/70">
+                    <tr key={order.id} className="transition-colors hover:bg-sunken">
                       <td className="px-5 py-3">
                         <Link
                           href={`/orders/${order.lrn}`}
-                          className="docnum font-semibold text-brand-700 hover:underline"
+                          className="docnum font-semibold text-brand-600 dark:text-brand-300 hover:underline"
                         >
                           {order.lrn}
                         </Link>
-                        <p className="text-[11px] text-slate-400">
+                        <p className="text-[11px] text-ink-4">
                           {relativeTime(order.createdAt)} · inv {order.invoiceNumber}
                         </p>
                       </td>
                       <td className="px-5 py-3">
-                        <p className="font-medium text-slate-800">
+                        <p className="font-medium text-ink">
                           {order.pickupCity} → {order.dropCity}
                         </p>
-                        <p className="text-[11px] text-slate-500">
+                        <p className="text-[11px] text-ink-3">
                           ETA {formatDate(order.etaDate)}
                         </p>
                       </td>
-                      <td className="max-w-44 truncate px-5 py-3 text-slate-700">
+                      <td className="max-w-44 truncate px-5 py-3 text-ink-2">
                         {order.dropCompany}
                       </td>
-                      <td className="px-5 py-3 text-slate-700">{order.partnerName ?? "—"}</td>
-                      <td className="tnum px-5 py-3 text-right text-slate-700">
+                      <td className="px-5 py-3 text-ink-2">{order.partnerName ?? "—"}</td>
+                      <td className="tnum px-5 py-3 text-right text-ink-2">
                         {order.totalBoxes}
                       </td>
-                      <td className="tnum px-5 py-3 text-right text-slate-700">
+                      <td className="tnum px-5 py-3 text-right text-ink-2">
                         {formatKg(order.chargedWeight)}
                       </td>
-                      <td className="tnum px-5 py-3 text-right font-semibold text-slate-900">
+                      <td className="tnum px-5 py-3 text-right font-semibold text-ink">
                         {formatINR(order.grandTotal)}
                       </td>
                       <td className="px-5 py-3">
@@ -185,7 +185,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                             target="_blank"
                             rel="noreferrer"
                             title="Lorry Receipt (3 copies)"
-                            className="grid size-7 place-items-center rounded-md text-slate-400 hover:bg-brand-50 hover:text-brand-700"
+                            className="grid size-7 place-items-center rounded-md text-ink-4 hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-300"
                           >
                             <FileText className="size-4" />
                             <span className="sr-only">LR for {order.lrn}</span>
@@ -195,7 +195,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                             target="_blank"
                             rel="noreferrer"
                             title="Box tags"
-                            className="grid size-7 place-items-center rounded-md text-slate-400 hover:bg-brand-50 hover:text-brand-700"
+                            className="grid size-7 place-items-center rounded-md text-ink-4 hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-300"
                           >
                             <Tags className="size-4" />
                             <span className="sr-only">Box tags for {order.lrn}</span>
@@ -212,7 +212,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
 
         {totalPages > 1 && (
           <CardFooter>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-ink-3">
               Page {page} of {totalPages} · {total} consignments
             </p>
             <div className="flex gap-2">

@@ -81,19 +81,6 @@ export const STATUS_LABEL: Record<string, string> = {
   CANCELLED: "Cancelled",
 };
 
-/** Tailwind classes per status — kept as full literals so JIT can see them. */
-export const STATUS_TONE: Record<string, string> = {
-  BOOKED: "bg-slate-100 text-slate-700 ring-slate-200",
-  PICKUP_SCHEDULED: "bg-sky-50 text-sky-700 ring-sky-200",
-  PICKED_UP: "bg-indigo-50 text-indigo-700 ring-indigo-200",
-  IN_TRANSIT: "bg-amber-50 text-amber-700 ring-amber-200",
-  REACHED_DESTINATION_HUB: "bg-violet-50 text-violet-700 ring-violet-200",
-  OUT_FOR_DELIVERY: "bg-orange-50 text-orange-700 ring-orange-200",
-  DELIVERED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  EXCEPTION: "bg-rose-50 text-rose-700 ring-rose-200",
-  CANCELLED: "bg-zinc-100 text-zinc-500 ring-zinc-200",
-};
-
 /** The happy path, in order — drives the tracking stepper. */
 export const TRACKING_JOURNEY: OrderStatus[] = [
   "BOOKED",

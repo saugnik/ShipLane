@@ -34,7 +34,7 @@ export function StepInvoice({
           <Field label="Invoice number" required error={errors["invoice.invoiceNumber"]}>
             {({ id, invalid }) => (
               <div className="relative">
-                <FileText className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+                <FileText className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-4" />
                 <Input
                   id={id}
                   invalid={invalid}
@@ -54,7 +54,7 @@ export function StepInvoice({
           >
             {({ id, invalid }) => (
               <div className="relative">
-                <IndianRupee className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+                <IndianRupee className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-4" />
                 <Input
                   id={id}
                   invalid={invalid}
@@ -93,8 +93,8 @@ export function StepInvoice({
         </Field>
 
         {ewayRequired && (
-          <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 text-xs text-amber-900">
-            <TriangleAlert className="mt-px size-4 shrink-0 text-amber-600" />
+          <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3.5 py-3 text-xs text-amber-700 dark:text-amber-300 dark:text-amber-200">
+            <TriangleAlert className="mt-px size-4 shrink-0 text-amber-600 dark:text-amber-400" />
             <p>
               <span className="font-semibold">E-Way Bill required.</span> Invoice value is above{" "}
               {formatINR(EWAY_BILL_THRESHOLD)}, so the consignment cannot legally move without a

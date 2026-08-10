@@ -83,9 +83,9 @@ export function StepReview({
               <DataRow label="Risk" value={RISK_LABEL[state.shipment.riskType]} />
             </dl>
 
-            <div className="overflow-x-auto rounded-lg border border-slate-200">
+            <div className="overflow-x-auto rounded-lg border border-line">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50">
+                <thead className="bg-sunken">
                   <tr className="[&>th]:label-caps [&>th]:px-3 [&>th]:py-2">
                     <th className="text-right">Qty</th>
                     <th>Description</th>
@@ -95,21 +95,21 @@ export function StepReview({
                     <th className="text-right">Line weight</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-line-soft">
                   {state.boxes.map((b) => {
                     const qty = Number(b.quantity || 0);
                     return (
                       <tr key={b.key} className="[&>td]:px-3 [&>td]:py-2">
-                        <td className="tnum text-right font-semibold text-slate-700">{qty}</td>
-                        <td className="text-slate-700">{b.description || "—"}</td>
-                        <td className="docnum text-slate-500">{b.referenceId || "—"}</td>
-                        <td className="tnum text-right text-slate-700">
+                        <td className="tnum text-right font-semibold text-ink-2">{qty}</td>
+                        <td className="text-ink-2">{b.description || "—"}</td>
+                        <td className="docnum text-ink-3">{b.referenceId || "—"}</td>
+                        <td className="tnum text-right text-ink-2">
                           {formatKg(Number(b.weightKg || 0))}
                         </td>
-                        <td className="tnum text-right text-slate-700">
+                        <td className="tnum text-right text-ink-2">
                           {b.lengthCm || 0} × {b.widthCm || 0} × {b.heightCm || 0} cm
                         </td>
-                        <td className="tnum text-right font-medium text-slate-800">
+                        <td className="tnum text-right font-medium text-ink">
                           {formatKg(Number(b.weightKg || 0) * qty)}
                         </td>
                       </tr>
@@ -139,19 +139,19 @@ export function StepReview({
                   aria-hidden
                 />
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-900">
+                  <p className="truncate text-sm font-semibold text-ink">
                     {quote.partnerName}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-ink-3">
                     {MOT_LABEL[state.shipment.mot]} · {quote.transitDays} working day
                     {quote.transitDays === 1 ? "" : "s"}
                   </p>
                 </div>
               </div>
 
-              <div className="rounded-lg bg-slate-50 px-3 py-2.5">
+              <div className="rounded-lg bg-sunken px-3 py-2.5">
                 <p className="label-caps">Expected delivery</p>
-                <p className="text-sm font-semibold text-slate-900">{formatDate(quote.etaDate)}</p>
+                <p className="text-sm font-semibold text-ink">{formatDate(quote.etaDate)}</p>
               </div>
 
               <dl className="flex flex-col">
@@ -162,7 +162,7 @@ export function StepReview({
                 {quote.fov > 0 && <DataRow label="FOV / risk" value={formatINR(quote.fov)} />}
                 {quote.odaCharge > 0 && <DataRow label="ODA" value={formatINR(quote.odaCharge)} />}
                 {quote.codCharge > 0 && <DataRow label="COD" value={formatINR(quote.codCharge)} />}
-                <div className="my-1 border-t border-slate-200" />
+                <div className="my-1 border-t border-line" />
                 <DataRow label="Sub-total" value={formatINR(quote.subtotal)} />
                 <DataRow label={`GST @ ${quote.gstPct}%`} value={formatINR(quote.gstAmount)} />
               </dl>
@@ -174,14 +174,14 @@ export function StepReview({
                 <span className="tnum text-lg font-bold">{formatINR(quote.grandTotal)}</span>
               </div>
 
-              <p className="text-[11px] leading-relaxed text-slate-500">
+              <p className="text-[11px] leading-relaxed text-ink-3">
                 Charges are locked at booking. Reweighing at the origin hub can revise the
                 chargeable weight; any difference appears on your monthly invoice.
               </p>
             </CardBody>
           ) : (
             <CardBody>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-ink-3">
                 No carrier selected yet. Go back to the carrier step to pick one.
               </p>
             </CardBody>
@@ -197,7 +197,7 @@ function EditButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-brand-700 transition-colors hover:bg-brand-50"
+      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-brand-600 dark:text-brand-300 transition-colors hover:bg-brand-500/10"
     >
       <Pencil className="size-3" />
       Edit
@@ -216,14 +216,14 @@ function PartySummary({
 }) {
   return (
     <div>
-      <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-500">
+      <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-ink-3">
         <span className={`size-1.5 rounded-full ${accent}`} aria-hidden />
         {title}
       </p>
-      <p className="text-sm font-semibold text-slate-900">{party.company || "—"}</p>
-      {party.contact && <p className="text-xs text-slate-600">{party.contact}</p>}
-      <p className="mt-1.5 text-xs leading-relaxed text-slate-600">{party.address || "—"}</p>
-      <p className="text-xs text-slate-600">
+      <p className="text-sm font-semibold text-ink">{party.company || "—"}</p>
+      {party.contact && <p className="text-xs text-ink-2">{party.contact}</p>}
+      <p className="mt-1.5 text-xs leading-relaxed text-ink-2">{party.address || "—"}</p>
+      <p className="text-xs text-ink-2">
         {party.city}
         {party.city && party.state ? ", " : ""}
         {party.state} — <span className="docnum">{party.pincode}</span>

@@ -28,14 +28,14 @@ export function BookingSuccess({ order, onNew }: { order: CreatedOrder; onNew: (
 
   return (
     <div className="animate-in-up mx-auto flex max-w-3xl flex-col gap-5">
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-6 py-8 text-center">
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-6 py-8 text-center">
         <CheckCircle2 className="size-11 text-emerald-600" />
-        <h2 className="text-lg font-bold text-emerald-900">Consignment booked</h2>
-        <p className="max-w-md text-sm text-emerald-800">
+        <h2 className="text-lg font-bold text-emerald-700 dark:text-emerald-300 dark:text-emerald-200">Consignment booked</h2>
+        <p className="max-w-md text-sm text-emerald-700 dark:text-emerald-300">
           {boxCount} box{boxCount === 1 ? "" : "es"} manifested from {order.pickupCity} to{" "}
           {order.dropCity}. Print the LR and the box tags before handover.
         </p>
-        <p className="docnum mt-1 rounded-lg bg-white px-4 py-2 text-lg font-bold tracking-wider text-emerald-900 shadow-card">
+        <p className="docnum mt-1 rounded-lg bg-surface px-4 py-2 text-lg font-bold tracking-wider text-emerald-700 dark:text-emerald-300 dark:text-emerald-200 shadow-sm">
           {order.lrn}
         </p>
         <Badge tone="success">LRN — quote this number for all tracking</Badge>
@@ -115,26 +115,26 @@ function DocumentTile({
   downloadHref: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-slate-200 p-3.5">
-      <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+    <div className="flex items-center gap-3 rounded-lg border border-line p-3.5">
+      <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-brand-500/10 text-brand-600">
         <Icon className="size-5" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-slate-900">{title}</p>
-        <p className="truncate text-xs text-slate-500">{subtitle}</p>
+        <p className="truncate text-sm font-semibold text-ink">{title}</p>
+        <p className="truncate text-xs text-ink-3">{subtitle}</p>
       </div>
       <div className="flex shrink-0 gap-1">
         <a
           href={href}
           target="_blank"
           rel="noreferrer"
-          className="rounded-md px-2 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-50"
+          className="rounded-md px-2 py-1 text-xs font-semibold text-brand-600 dark:text-brand-300 hover:bg-brand-500/10"
         >
           Preview
         </a>
         <a
           href={downloadHref}
-          className="grid size-7 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+          className="grid size-7 place-items-center rounded-md text-ink-4 hover:bg-inset hover:text-ink-2"
           title={`Download ${title}`}
         >
           <Download className="size-4" />

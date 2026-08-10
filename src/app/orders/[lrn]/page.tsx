@@ -58,7 +58,7 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
     <>
       <Link
         href="/orders"
-        className="no-print mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800"
+        className="no-print mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-ink-3 hover:text-ink"
       >
         <ArrowLeft className="size-3.5" />
         All consignments
@@ -161,7 +161,7 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
               action={
                 <a
                   href={`/api/orders/${order.lrn}/box-tags?download=1`}
-                  className="no-print inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline"
+                  className="no-print inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300 hover:underline"
                 >
                   <Download className="size-3.5" />
                   Download tags
@@ -171,7 +171,7 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
             <CardBody className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[680px] text-left text-sm">
-                  <thead className="border-b border-slate-200 bg-slate-50">
+                  <thead className="border-b border-line bg-sunken">
                     <tr className="[&>th]:label-caps [&>th]:px-5 [&>th]:py-2.5">
                       <th>Line</th>
                       <th className="text-right">Qty</th>
@@ -183,7 +183,7 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
                       <th className="text-right">Line weight</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-line-soft">
                     {(() => {
                       // Tag numbers run continuously across the consignment, so
                       // each line shows the range its cartons occupy.
@@ -193,26 +193,26 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
                         cursor += box.quantity;
                         return (
                           <tr key={box.id}>
-                            <td className="tnum px-5 py-2.5 font-semibold text-slate-700">
+                            <td className="tnum px-5 py-2.5 font-semibold text-ink-2">
                               {box.lineNumber}
                             </td>
-                            <td className="tnum px-5 py-2.5 text-right font-semibold text-slate-800">
+                            <td className="tnum px-5 py-2.5 text-right font-semibold text-ink">
                               {box.quantity}
                             </td>
-                            <td className="docnum px-5 py-2.5 text-slate-600">
+                            <td className="docnum px-5 py-2.5 text-ink-2">
                               {from === cursor ? `#${from}` : `#${from}–${cursor}`}
                             </td>
-                            <td className="px-5 py-2.5 text-slate-700">{box.description}</td>
-                            <td className="docnum px-5 py-2.5 text-slate-500">
+                            <td className="px-5 py-2.5 text-ink-2">{box.description}</td>
+                            <td className="docnum px-5 py-2.5 text-ink-3">
                               {box.referenceId || "—"}
                             </td>
-                            <td className="tnum px-5 py-2.5 text-right text-slate-700">
+                            <td className="tnum px-5 py-2.5 text-right text-ink-2">
                               {formatKg(box.weightKg)}
                             </td>
-                            <td className="tnum px-5 py-2.5 text-right text-slate-700">
+                            <td className="tnum px-5 py-2.5 text-right text-ink-2">
                               {box.lengthCm} × {box.widthCm} × {box.heightCm} cm
                             </td>
-                            <td className="tnum px-5 py-2.5 text-right font-medium text-slate-800">
+                            <td className="tnum px-5 py-2.5 text-right font-medium text-ink">
                               {formatKg(box.weightKg * box.quantity)}
                             </td>
                           </tr>
@@ -235,7 +235,7 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
                 <DataRow label="Actual weight" value={formatKg(order.actualWeight)} />
                 <DataRow label="Volumetric weight" value={formatKg(order.volumetricWeight)} />
                 <DataRow label="Chargeable weight" value={formatKg(order.chargedWeight)} />
-                <div className="my-1 border-t border-slate-200" />
+                <div className="my-1 border-t border-line" />
                 <DataRow
                   label={`Freight @ ${formatINR(order.ratePerKg)}/kg`}
                   value={formatINR(order.freight)}
@@ -245,7 +245,7 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
                 {order.fov > 0 && <DataRow label="FOV / risk" value={formatINR(order.fov)} />}
                 {order.odaCharge > 0 && <DataRow label="ODA" value={formatINR(order.odaCharge)} />}
                 {order.codCharge > 0 && <DataRow label="COD" value={formatINR(order.codCharge)} />}
-                <div className="my-1 border-t border-slate-200" />
+                <div className="my-1 border-t border-line" />
                 <DataRow label="Sub-total" value={formatINR(order.subtotal)} />
                 <DataRow label="GST" value={formatINR(order.gstAmount)} />
               </dl>
@@ -278,8 +278,8 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
                 <DataRow label="Said to contain" value={order.saidToContain} />
               </dl>
               {order.remarks && (
-                <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                  <span className="font-semibold text-slate-700">Remarks: </span>
+                <p className="mt-3 rounded-lg bg-sunken px-3 py-2 text-xs text-ink-2">
+                  <span className="font-semibold text-ink-2">Remarks: </span>
                   {order.remarks}
                 </p>
               )}
@@ -333,14 +333,14 @@ function PartyBlock({
 }) {
   return (
     <div>
-      <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-500">
+      <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-ink-3">
         <span className={`size-1.5 rounded-full ${accent}`} aria-hidden />
         {title}
       </p>
-      <p className="text-sm font-semibold text-slate-900">{company}</p>
-      {contact && <p className="text-xs text-slate-600">{contact}</p>}
-      <p className="mt-1.5 text-xs leading-relaxed text-slate-600">{address}</p>
-      <p className="text-xs text-slate-600">
+      <p className="text-sm font-semibold text-ink">{company}</p>
+      {contact && <p className="text-xs text-ink-2">{contact}</p>}
+      <p className="mt-1.5 text-xs leading-relaxed text-ink-2">{address}</p>
+      <p className="text-xs text-ink-2">
         {city}, {state} — <span className="docnum">{pincode}</span>
       </p>
       <div className="mt-2 flex flex-wrap gap-1.5">

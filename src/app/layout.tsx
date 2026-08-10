@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { AppShell } from "@/components/AppShell";
+import { ThemeScript } from "@/components/ThemeToggle";
 import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
@@ -18,7 +19,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Runs before paint so a dark-mode user never sees a white flash. */}
+        <ThemeScript />
+      </head>
       <body className={`${inter.variable} ${mono.variable} antialiased`}>
         <AppShell>{children}</AppShell>
       </body>

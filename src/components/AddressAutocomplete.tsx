@@ -147,7 +147,7 @@ export function AddressAutocomplete({
 
   if (!enabled) {
     return (
-      <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
+      <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs text-amber-700 dark:text-amber-300">
         <TriangleAlert className="mt-px size-3.5 shrink-0" />
         <p>
           Map search is off — no <code className="font-mono">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>{" "}
@@ -160,7 +160,7 @@ export function AddressAutocomplete({
   return (
     <div className="flex flex-col gap-2">
       <div ref={boxRef} className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-4" />
         <input
           id={id}
           type="text"
@@ -182,18 +182,18 @@ export function AddressAutocomplete({
           className={cn(
             controlClass,
             "h-10 pl-9",
-            invalid ? "border-rose-400 focus:border-rose-500" : "border-slate-300 focus:border-brand-500",
+            invalid ? "border-rose-500/60 focus:border-rose-500" : "border-line-strong focus:border-brand-500",
           )}
         />
         {(searching || resolving) && (
-          <Loader2 className="absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin text-slate-400" />
+          <Loader2 className="absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin text-ink-4" />
         )}
 
         {open && suggestions.length > 0 && (
           <ul
             id={id ? `${id}-listbox` : undefined}
             role="listbox"
-            className="animate-in-up absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-pop"
+            className="animate-in-up absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-line bg-surface py-1 shadow-lg"
           >
             {suggestions.map((s, i) => (
               <li key={s.id} role="option" aria-selected={i === highlight}>
@@ -203,16 +203,16 @@ export function AddressAutocomplete({
                   onClick={() => void choose(s)}
                   className={cn(
                     "flex w-full items-start gap-2.5 px-3 py-2 text-left",
-                    i === highlight ? "bg-brand-50" : "hover:bg-slate-50",
+                    i === highlight ? "bg-brand-500/10" : "hover:bg-sunken",
                   )}
                 >
                   <MapPin className="mt-0.5 size-3.5 shrink-0 text-brand-500" />
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium text-slate-900">
+                    <span className="block truncate text-sm font-medium text-ink">
                       {s.primary}
                     </span>
                     {s.secondary && (
-                      <span className="block truncate text-xs text-slate-500">{s.secondary}</span>
+                      <span className="block truncate text-xs text-ink-3">{s.secondary}</span>
                     )}
                   </span>
                 </button>
@@ -223,7 +223,7 @@ export function AddressAutocomplete({
       </div>
 
       {failed && (
-        <p className="text-xs text-rose-600">
+        <p className="text-xs text-rose-600 dark:text-rose-400">
           Could not read that location. Pick another result or type the address manually.
         </p>
       )}
@@ -301,8 +301,8 @@ function MapPreview({
   if (!hasPin) return null;
 
   return (
-    <div className="relative overflow-hidden rounded-lg border border-slate-200">
-      <div ref={hostRef} className="h-40 w-full bg-slate-100" aria-label={`Map showing ${label}`} />
+    <div className="relative overflow-hidden rounded-lg border border-line">
+      <div ref={hostRef} className="h-40 w-full bg-inset" aria-label={`Map showing ${label}`} />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-gradient-to-t from-slate-900/70 to-transparent px-3 py-2 text-[11px] font-medium text-white">
         {dragging ? (
           <>

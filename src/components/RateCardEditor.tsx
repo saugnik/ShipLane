@@ -236,7 +236,7 @@ export function RateCardEditor({ partnerId }: { partnerId: string }) {
             </div>
 
             {error && (
-              <p className="flex items-center gap-1.5 text-xs font-medium text-rose-600">
+              <p className="flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
                 <TriangleAlert className="size-3.5" />
                 {error}
               </p>
@@ -271,18 +271,18 @@ export function RateCardEditor({ partnerId }: { partnerId: string }) {
         />
         <CardBody className="p-0">
           {loading ? (
-            <div className="flex items-center justify-center gap-2 py-12 text-sm text-slate-500">
+            <div className="flex items-center justify-center gap-2 py-12 text-sm text-ink-3">
               <Loader2 className="size-4 animate-spin" />
               Loading rate card…
             </div>
           ) : rates.length === 0 ? (
-            <p className="px-5 py-12 text-center text-sm text-slate-500">
+            <p className="px-5 py-12 text-center text-sm text-ink-3">
               No lanes published for this filter.
             </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-left text-sm">
-                <thead className="border-b border-slate-200 bg-slate-50">
+                <thead className="border-b border-line bg-sunken">
                   <tr className="[&>th]:label-caps [&>th]:px-5 [&>th]:py-2.5">
                     <th>Origin</th>
                     <th>Destination</th>
@@ -293,22 +293,22 @@ export function RateCardEditor({ partnerId }: { partnerId: string }) {
                     <th />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-line-soft">
                   {rates.map((rate) => (
-                    <tr key={rate.id} className="hover:bg-slate-50/70">
-                      <td className="px-5 py-2.5 text-slate-700">
+                    <tr key={rate.id} className="hover:bg-sunken">
+                      <td className="px-5 py-2.5 text-ink-2">
                         <Lane state={rate.originState} city={rate.originCity} />
                       </td>
-                      <td className="px-5 py-2.5 text-slate-700">
+                      <td className="px-5 py-2.5 text-ink-2">
                         <Lane state={rate.destState} city={rate.destCity} />
                       </td>
-                      <td className="tnum px-5 py-2.5 text-right font-semibold text-slate-900">
+                      <td className="tnum px-5 py-2.5 text-right font-semibold text-ink">
                         {formatINR(rate.ratePerKg)}
                       </td>
-                      <td className="tnum px-5 py-2.5 text-right text-slate-700">
+                      <td className="tnum px-5 py-2.5 text-right text-ink-2">
                         {formatINR(rate.minCharge)}
                       </td>
-                      <td className="tnum px-5 py-2.5 text-right text-slate-700">
+                      <td className="tnum px-5 py-2.5 text-right text-ink-2">
                         {rate.transitDays}d
                       </td>
                       <td className="px-5 py-2.5">
@@ -319,7 +319,7 @@ export function RateCardEditor({ partnerId }: { partnerId: string }) {
                         <button
                           type="button"
                           onClick={() => void remove(rate.id)}
-                          className="rounded-md p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                          className="rounded-md p-1.5 text-ink-4 hover:bg-rose-500/10 hover:text-rose-600 dark:text-rose-400"
                           title="Delete lane"
                         >
                           <Trash2 className="size-4" />
@@ -342,7 +342,7 @@ function Lane({ state, city }: { state: string; city: string }) {
   return (
     <span>
       <span className="font-medium">{city === "*" ? "Any city" : city}</span>
-      <span className="block text-[11px] text-slate-500">
+      <span className="block text-[11px] text-ink-3">
         {state === "*" ? "Any state" : state}
       </span>
     </span>

@@ -80,7 +80,7 @@ export function TrackClient() {
               <label htmlFor="lrn" className="label-caps mb-1 block">
                 LRN
               </label>
-              <PackageSearch className="pointer-events-none absolute bottom-3 left-3 size-4 text-slate-400" />
+              <PackageSearch className="pointer-events-none absolute bottom-3 left-3 size-4 text-ink-4" />
               <Input
                 id="lrn"
                 value={lrn}
@@ -116,9 +116,9 @@ export function TrackClient() {
               action={<StatusBadge status={shipment.status} />}
             />
             <CardBody className="flex flex-col gap-5">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-lg bg-slate-50 px-4 py-3">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-lg bg-sunken px-4 py-3">
                 <Leg city={shipment.pickupCity} state={shipment.pickupState} label="From" />
-                <ArrowRight className="size-4 shrink-0 text-slate-400" />
+                <ArrowRight className="size-4 shrink-0 text-ink-4" />
                 <Leg city={shipment.dropCity} state={shipment.dropState} label="To" />
 
                 <div className="ml-auto flex items-center gap-5">
@@ -153,8 +153,8 @@ function Leg({ city, state, label }: { city: string; state: string; label: strin
   return (
     <div>
       <p className="label-caps">{label}</p>
-      <p className="text-sm font-semibold text-slate-900">{city}</p>
-      <p className="text-[11px] text-slate-500">{state}</p>
+      <p className="text-sm font-semibold text-ink">{city}</p>
+      <p className="text-[11px] text-ink-3">{state}</p>
     </div>
   );
 }
@@ -174,7 +174,7 @@ function Fact({
         <Icon className="size-3" />
         {label}
       </p>
-      <p className="text-sm font-semibold text-slate-800">{value}</p>
+      <p className="text-sm font-semibold text-ink">{value}</p>
     </div>
   );
 }

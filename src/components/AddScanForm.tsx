@@ -53,7 +53,7 @@ export function AddScanForm({ lrn, currentStatus }: { lrn: string; currentStatus
 
   if (terminal) {
     return (
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-ink-3">
         This consignment is closed — no further scans can be added.
       </p>
     );
@@ -69,7 +69,7 @@ export function AddScanForm({ lrn, currentStatus }: { lrn: string; currentStatus
   }
 
   return (
-    <form onSubmit={submit} className="flex w-full flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+    <form onSubmit={submit} className="flex w-full flex-col gap-3 rounded-lg border border-line bg-sunken p-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Status" required>
           {({ id }) => (
@@ -108,7 +108,7 @@ export function AddScanForm({ lrn, currentStatus }: { lrn: string; currentStatus
       </Field>
 
       {error && (
-        <p className="flex items-center gap-1.5 text-xs font-medium text-rose-600">
+        <p className="flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
           <TriangleAlert className="size-3.5" />
           {error}
         </p>
