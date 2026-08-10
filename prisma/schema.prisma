@@ -70,6 +70,11 @@ model Order {
 
   status String @default("BOOKED")
 
+  /// Who booked it. Nullable because the demo seed predates accounts; a USER
+  /// only ever sees their own consignments, an ADMIN sees every row.
+  createdBy   Account? @relation(fields: [createdById], references: [id])
+  createdById String?
+
   /// What is being shipped. One consignment carries one declared commodity, so
   /// this is shipment-level — asking the shipper and the consignee separately
   /// only created a way for the two to disagree.
@@ -152,6 +157,7 @@ model Order {
 
   @@index([status])
   @@index([createdAt])
+  @@index([createdById])
 }
 
 /// A manifest line: N identical cartons of one size.
@@ -193,4 +199,53 @@ model TrackingEvent {
 model Counter {
   key   String @id
   value Int    @default(0)
+}
+
+/// An account on the platform.
+///
+/// Two roles: USER books and manages consignments; ADMIN is a read-only
+/// oversight account that can see every company's traffic. There is exactly
+/// one ADMIN, seeded from the environment — it is never registerable, and the
+/// public auth screens make no mention of it.
+model Account {
+  id      String  @id @default(cuid())
+  email   String  @unique
+  name    String
+  company String?
+  phone   String?
+  role    String  @default("USER") // USER | ADMIN
+  active  Boolean @default(true)
+
+  /// Argon-style scrypt hash. Set for the ADMIN only — users sign in with OTP
+  /// and never have a password to leak.
+  passwordHash String?
+
+  /// Bumped to invalidate every issued session (password reset, lockout).
+  tokenVersion Int @default(0)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastLoginAt DateTime?
+
+  orders Order[]
+
+  @@index([role])
+}
+
+/// A short-lived one-time code. The code itself is never stored.
+model OtpToken {
+  id        String    @id @default(cuid())
+  email     String
+  codeHash  String
+  purpose   String // LOGIN | REGISTER
+  /// Registration details are parked here until the code is verified, so an
+  /// unverified email never creates an Account row.
+  payload   String?
+  expiresAt DateTime
+  attempts  Int       @default(0)
+  consumedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email, purpose])
+  @@index([expiresAt])
 }

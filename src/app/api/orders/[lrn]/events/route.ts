@@ -1,4 +1,5 @@
 import { handle, HttpError, notFound } from "@/lib/api";
+import { apiWriter, orderScope } from "@/lib/auth/guard";
 import { prisma } from "@/lib/db";
 import { trackingEventSchema } from "@/lib/validation";
 
@@ -12,9 +13,13 @@ const TERMINAL = new Set(["DELIVERED", "CANCELLED"]);
 export async function POST(req: Request, ctx: { params: Promise<{ lrn: string }> }) {
   const { lrn } = await ctx.params;
   return handle(async () => {
+    const viewer = await apiWriter();
     const input = trackingEventSchema.parse(await req.json());
 
-    const order = await prisma.order.findUnique({ where: { lrn }, select: { id: true, status: true } });
+    const order = await prisma.order.findFirst({
+      where: { lrn, ...orderScope(viewer) },
+      select: { id: true, status: true },
+    });
     if (!order) throw notFound(`Consignment ${lrn}`);
     if (TERMINAL.has(order.status)) {
       throw new HttpError(`Consignment is already ${order.status.toLowerCase()} and cannot be updated`, 409);

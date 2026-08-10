@@ -339,6 +339,8 @@ export async function seedDemoOrders(
   prisma: PrismaClient,
   partners: PartnerCommercials[],
   now: Date,
+  /** Account that owns these consignments — a USER only sees their own. */
+  createdById: string,
 ): Promise<number> {
   const byCode = new Map(partners.map((p) => [p.code, p]));
   let seq = 0;
@@ -387,6 +389,7 @@ export async function seedDemoOrders(
         mawb,
         status: demo.status,
         createdAt: bookedAt,
+        createdById,
 
         product: demo.product,
 

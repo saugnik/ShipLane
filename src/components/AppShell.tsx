@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Boxes,
+  Eye,
   Headset,
   LayoutDashboard,
   Menu,
@@ -17,22 +18,64 @@ import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import { ButtonLink } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { UserMenu } from "@/components/UserMenu";
+import type { Role } from "@/lib/auth/session";
 
-const NAV = [
-  { section: "Operate", items: [
-    { href: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
-    { href: "/book", label: "Book shipment", icon: PackagePlus },
-    { href: "/orders", label: "Consignments", icon: Boxes },
-  ]},
-  { section: "Network", items: [
-    { href: "/partners", label: "Carriers & rates", icon: Truck },
-    { href: "/track", label: "Track", icon: Radar },
-  ]},
-];
+/**
+ * Navigation is role-derived rather than filtered at render: an ADMIN never
+ * sees "Book shipment" because booking is not something the role can do, and a
+ * USER never learns that an oversight console exists.
+ */
+function navFor(role: Role) {
+  if (role === "ADMIN") {
+    return [
+      {
+        section: "Oversight",
+        items: [
+          { href: "/admin", label: "All activity", icon: Eye, exact: true },
+          { href: "/orders", label: "Consignments", icon: Boxes },
+        ],
+      },
+      {
+        section: "Network",
+        items: [
+          { href: "/partners", label: "Carriers & rates", icon: Truck },
+          { href: "/track", label: "Track", icon: Radar },
+        ],
+      },
+    ];
+  }
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+  return [
+    {
+      section: "Operate",
+      items: [
+        { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
+        { href: "/book", label: "Book shipment", icon: PackagePlus },
+        { href: "/orders", label: "Consignments", icon: Boxes },
+      ],
+    },
+    {
+      section: "Network",
+      items: [
+        { href: "/partners", label: "Carriers & rates", icon: Truck },
+        { href: "/track", label: "Track", icon: Radar },
+      ],
+    },
+  ];
+}
+
+export function AppShell({
+  children,
+  viewer,
+}: {
+  children: React.ReactNode;
+  viewer: { name: string; email: string; role: Role };
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const NAV = navFor(viewer.role);
+  const isAdmin = viewer.role === "ADMIN";
 
   // Close the slide-over on navigation, otherwise it covers the page you just
   // asked for on mobile.
@@ -51,7 +94,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
       >
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-line px-5">
-          <Link href="/" className="group flex items-center gap-2.5">
+          <Link href={isAdmin ? "/admin" : "/dashboard"} className="group flex items-center gap-2.5">
             <span className="relative grid size-9 place-items-center rounded-[11px] bg-brand-600 text-white shadow-sm shadow-brand-600/30 ring-1 ring-inset ring-white/15">
               <Truck className="size-4.5" />
             </span>
@@ -60,7 +103,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {BRAND.name}
               </span>
               <span className="block text-[10px] font-semibold tracking-[0.08em] text-ink-4 uppercase">
-                Freight console
+                {isAdmin ? "Oversight" : "Freight console"}
               </span>
             </span>
           </Link>
@@ -151,6 +194,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Menu className="size-5" />
           </button>
 
+          {isAdmin && (
+            <span className="hidden items-center gap-1.5 rounded-md bg-amber-500/12 px-2 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-500/25 sm:inline-flex dark:text-amber-400">
+              <Eye className="size-3" />
+              Read-only
+            </span>
+          )}
+
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />
             <span className="mx-1 hidden h-5 w-px bg-line sm:block" aria-hidden />
@@ -158,10 +208,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Radar className="size-3.5" />
               <span className="hidden sm:inline">Track</span>
             </ButtonLink>
-            <ButtonLink href="/book" size="sm">
-              <PackagePlus className="size-3.5" />
-              <span className="hidden sm:inline">New booking</span>
-            </ButtonLink>
+            {!isAdmin && (
+              <ButtonLink href="/book" size="sm">
+                <PackagePlus className="size-3.5" />
+                <span className="hidden sm:inline">New booking</span>
+              </ButtonLink>
+            )}
+            <span className="mx-1 hidden h-5 w-px bg-line sm:block" aria-hidden />
+            <UserMenu name={viewer.name} email={viewer.email} role={viewer.role} />
           </div>
         </header>
 

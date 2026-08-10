@@ -1,4 +1,5 @@
-import { handle, HttpError, notFound } from "@/lib/api";
+import { handle, notFound } from "@/lib/api";
+import { apiDeleter, apiViewer, apiWriter } from "@/lib/auth/guard";
 import { prisma } from "@/lib/db";
 import { rateSchema } from "@/lib/validation";
 
@@ -8,6 +9,7 @@ const PAGE_SIZE = 50;
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   return handle(async () => {
+    await apiViewer();
     const url = new URL(req.url);
     const destState = url.searchParams.get("destState")?.trim() ?? "";
     const page = Math.max(1, Number(url.searchParams.get("page") ?? 1) || 1);
@@ -31,6 +33,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   return handle(async () => {
+    await apiWriter();
     const partner = await prisma.partner.findUnique({ where: { id }, select: { id: true } });
     if (!partner) throw notFound("Delivery partner");
 
@@ -59,16 +62,15 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   });
 }
 
-export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const { id } = await ctx.params;
+/**
+ * Deletion is disabled platform-wide.
+ *
+ * A USER may not delete, and the ADMIN may not change anything, so between the
+ * two roles nobody holds delete rights. The endpoint stays so callers get an
+ * explicit, explained refusal rather than a confusing 404 or 405.
+ */
+export async function DELETE() {
   return handle(async () => {
-    const rateId = new URL(req.url).searchParams.get("rateId");
-    if (!rateId) throw new HttpError("rateId query parameter is required");
-
-    const rate = await prisma.rate.findFirst({ where: { id: rateId, partnerId: id } });
-    if (!rate) throw notFound("Lane");
-
-    await prisma.rate.delete({ where: { id: rateId } });
-    return { deleted: rateId };
+    await apiDeleter();
   });
 }

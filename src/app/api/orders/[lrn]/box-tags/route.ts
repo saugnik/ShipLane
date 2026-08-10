@@ -1,3 +1,5 @@
+import { orderScope } from "@/lib/auth/guard";
+import { currentSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { toShipmentDoc } from "@/lib/documents";
 import { renderBoxTagsPdf } from "@/lib/pdf/boxTags";
@@ -8,7 +10,14 @@ export const runtime = "nodejs";
 export async function GET(req: Request, ctx: { params: Promise<{ lrn: string }> }) {
   const { lrn } = await ctx.params;
 
-  const order = await prisma.order.findUnique({ where: { lrn }, include: { boxes: true } });
+  // Tags carry the consignee's address, so the same gate as the LR applies.
+  const session = await currentSession();
+  if (!session) return new Response("Sign in to download this document", { status: 401 });
+
+  const order = await prisma.order.findFirst({
+    where: { lrn, ...orderScope(session) },
+    include: { boxes: true },
+  });
   if (!order) {
     return new Response(`Consignment ${lrn} not found`, { status: 404 });
   }

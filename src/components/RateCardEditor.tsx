@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Plus, Trash2, TriangleAlert } from "lucide-react";
+import { Eye, Loader2, Plus, TriangleAlert } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -40,7 +40,14 @@ const blankLane = () => ({
  * rating engine scores specificity, so adding a city row never requires
  * touching the state row it overrides.
  */
-export function RateCardEditor({ partnerId }: { partnerId: string }) {
+export function RateCardEditor({
+  partnerId,
+  readOnly = false,
+}: {
+  partnerId: string;
+  /** ADMIN is an oversight role — it can read a rate card but never edit one. */
+  readOnly?: boolean;
+}) {
   const [rates, setRates] = useState<Rate[]>([]);
   const [total, setTotal] = useState(0);
   const [filter, setFilter] = useState("");
@@ -103,18 +110,17 @@ export function RateCardEditor({ partnerId }: { partnerId: string }) {
     }
   };
 
-  const remove = async (rateId: string) => {
-    const res = await fetch(`/api/partners/${partnerId}/rates?rateId=${rateId}`, {
-      method: "DELETE",
-    });
-    if (res.ok) {
-      setRates((prev) => prev.filter((r) => r.id !== rateId));
-      setTotal((t) => Math.max(0, t - 1));
-    }
-  };
-
   return (
     <div className="flex flex-col gap-5">
+      {readOnly ? (
+        <div className="flex items-start gap-2.5 rounded-[var(--radius-card)] border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs leading-relaxed text-amber-800 dark:text-amber-200">
+          <Eye className="mt-px size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p>
+            <span className="font-semibold">Read-only.</span> The oversight account can review rate
+            cards but cannot publish or change lanes.
+          </p>
+        </div>
+      ) : (
       <Card>
         <CardHeader
           icon={Plus}
@@ -251,6 +257,7 @@ export function RateCardEditor({ partnerId }: { partnerId: string }) {
           </form>
         </CardBody>
       </Card>
+      )}
 
       <Card>
         <CardHeader
@@ -290,7 +297,6 @@ export function RateCardEditor({ partnerId }: { partnerId: string }) {
                     <th className="text-right">Min charge</th>
                     <th className="text-right">Transit</th>
                     <th>Flags</th>
-                    <th />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line-soft">
@@ -312,19 +318,10 @@ export function RateCardEditor({ partnerId }: { partnerId: string }) {
                         {rate.transitDays}d
                       </td>
                       <td className="px-5 py-2.5">
-                        {rate.oda ? <Badge tone="warning">ODA</Badge> : null}
-                        {rate.destCity !== "*" && <Badge tone="brand">City lane</Badge>}
-                      </td>
-                      <td className="px-5 py-2.5 text-right">
-                        <button
-                          type="button"
-                          onClick={() => void remove(rate.id)}
-                          className="rounded-md p-1.5 text-ink-4 hover:bg-rose-500/10 hover:text-rose-600 dark:text-rose-400"
-                          title="Delete lane"
-                        >
-                          <Trash2 className="size-4" />
-                          <span className="sr-only">Delete lane</span>
-                        </button>
+                        <span className="flex flex-wrap gap-1.5">
+                          {rate.oda ? <Badge tone="warning">ODA</Badge> : null}
+                          {rate.destCity !== "*" && <Badge tone="brand">City lane</Badge>}
+                        </span>
                       </td>
                     </tr>
                   ))}

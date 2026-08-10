@@ -1,9 +1,11 @@
 import { handle } from "@/lib/api";
+import { apiViewer } from "@/lib/auth/guard";
 import { prisma } from "@/lib/db";
 
 /** Carrier panel with rate-card size — powers the admin list. */
 export async function GET() {
   return handle(async () => {
+    await apiViewer();
     const partners = await prisma.partner.findMany({
       orderBy: { name: "asc" },
       include: { _count: { select: { rates: true, orders: true } } },

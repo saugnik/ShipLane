@@ -1,3 +1,5 @@
+import { orderScope } from "@/lib/auth/guard";
+import { currentSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { toShipmentDoc } from "@/lib/documents";
 import { renderLrPdf } from "@/lib/pdf/lr";
@@ -13,7 +15,15 @@ export const runtime = "nodejs";
 export async function GET(req: Request, ctx: { params: Promise<{ lrn: string }> }) {
   const { lrn } = await ctx.params;
 
-  const order = await prisma.order.findUnique({ where: { lrn }, include: { boxes: true } });
+  // The LR carries pricing and contact details, so it is gated exactly like the
+  // order itself: signed in, and scoped to what the viewer is allowed to see.
+  const session = await currentSession();
+  if (!session) return new Response("Sign in to download this document", { status: 401 });
+
+  const order = await prisma.order.findFirst({
+    where: { lrn, ...orderScope(session) },
+    include: { boxes: true },
+  });
   if (!order) {
     return new Response(`Consignment ${lrn} not found`, { status: 404 });
   }

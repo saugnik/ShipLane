@@ -9,6 +9,7 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma";
 import { INDIAN_STATES, zoneForState } from "../src/lib/india";
+import { hashSecret } from "../src/lib/auth/crypto";
 import { toPartnerCommercials } from "../src/lib/partnerMapper";
 import { seedDemoOrders } from "./demo";
 
@@ -22,6 +23,9 @@ const prisma = new PrismaClient({
 
 /** `npm run db:seed -- --carriers-only` skips the sample consignments. */
 const CARRIERS_ONLY = process.argv.includes("--carriers-only");
+
+/** Owner of the seeded consignments — sign in with this to explore the demo. */
+const DEMO_EMAIL = (process.env.DEMO_EMAIL ?? "demo@shiplane.example").trim().toLowerCase();
 
 type PartnerSeed = {
   code: string;
@@ -195,6 +199,33 @@ const ODA_STATES = new Set([
 
 const round = (n: number) => Math.round(n * 100) / 100;
 
+/**
+ * The single oversight account. Never registerable — it exists only because it
+ * is seeded here, from the environment.
+ */
+async function seedAdmin() {
+  const email = (process.env.ADMIN_EMAIL ?? "admin@shiplane.example").trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD ?? "";
+
+  if (!password) {
+    console.log("  ADMIN_PASSWORD not set — skipping admin seed.");
+    console.log("  Set ADMIN_EMAIL and ADMIN_PASSWORD in .env, then re-run: npm run db:seed");
+    return;
+  }
+  if (password.length < 10) {
+    throw new Error("ADMIN_PASSWORD must be at least 10 characters.");
+  }
+
+  const passwordHash = await hashSecret(password);
+  await prisma.account.upsert({
+    where: { email },
+    create: { email, name: "Oversight", role: "ADMIN", passwordHash },
+    // Re-seeding rotates the password and revokes existing admin sessions.
+    update: { role: "ADMIN", passwordHash, active: true, tokenVersion: { increment: 1 } },
+  });
+  console.log(`  admin ready: ${email}  (sign in at /admin/login)`);
+}
+
 async function main() {
   console.log("Resetting demo data…");
   // Orders reference partners, so they go first.
@@ -204,6 +235,12 @@ async function main() {
   await prisma.counter.deleteMany();
   await prisma.rate.deleteMany();
   await prisma.partner.deleteMany();
+  await prisma.otpToken.deleteMany();
+  // Registered accounts survive a reseed; only the demo account is recreated.
+  await prisma.account.deleteMany({ where: { email: DEMO_EMAIL } });
+
+  console.log("Accounts…");
+  await seedAdmin();
 
   for (const p of PARTNERS) {
     const partner = await prisma.partner.create({
@@ -312,9 +349,20 @@ async function main() {
     await prisma.partner.findMany({ where: { active: true }, include: { rates: true } })
   ).map(toPartnerCommercials);
 
+  // Demo consignments need an owner, otherwise no USER can see them.
+  const demoAccount = await prisma.account.create({
+    data: {
+      email: DEMO_EMAIL,
+      name: "Demo Operations",
+      company: "Amwoodo Eco Products Pvt Ltd",
+      role: "USER",
+    },
+  });
+
   console.log("Creating demo consignments…");
-  const count = await seedDemoOrders(prisma, partners, new Date());
-  console.log(`  ${count} consignments seeded`);
+  const count = await seedDemoOrders(prisma, partners, new Date(), demoAccount.id);
+  console.log(`  ${count} consignments seeded for ${DEMO_EMAIL}`);
+  console.log(`  sign in as this account at /login using that email`);
 
   console.log("Seed complete.");
 }

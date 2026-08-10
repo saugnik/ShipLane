@@ -59,7 +59,12 @@ export function Field({ label, required, error, hint, className, children }: Fie
   );
 }
 
-type InputProps = React.InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean };
+// React 19 passes `ref` as an ordinary prop, so no forwardRef wrapper is needed
+// — it just has to be declared on the type to survive the spread.
+type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
+  invalid?: boolean;
+  ref?: React.Ref<HTMLInputElement>;
+};
 
 export function Input({ invalid, className, ...rest }: InputProps) {
   return (

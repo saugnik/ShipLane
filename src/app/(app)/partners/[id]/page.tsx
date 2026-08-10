@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
 import { RateCardEditor } from "@/components/RateCardEditor";
 import { Badge } from "@/components/ui/Badge";
+import { requireViewer } from "@/lib/auth/guard";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function PartnerPage({ params }: { params: Params }) {
   const { id } = await params;
+  const viewer = await requireViewer(`/partners/${id}`);
   const partner = await prisma.partner.findUnique({ where: { id } });
   if (!partner) notFound();
 
@@ -49,7 +51,7 @@ export default async function PartnerPage({ params }: { params: Params }) {
         }
       />
 
-      <RateCardEditor partnerId={partner.id} />
+      <RateCardEditor partnerId={partner.id} readOnly={viewer.role === "ADMIN"} />
     </>
   );
 }

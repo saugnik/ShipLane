@@ -19,6 +19,7 @@ import { TrackingTimeline } from "@/components/TrackingTimeline";
 import { Badge, StatusBadge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader, DataRow } from "@/components/ui/Card";
+import { orderScope, requireViewer } from "@/lib/auth/guard";
 import { prisma } from "@/lib/db";
 import {
   DELIVERY_TYPE_LABEL,
@@ -44,8 +45,11 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 export default async function OrderDetailPage({ params }: { params: Params }) {
   const { lrn } = await params;
 
-  const order = await prisma.order.findUnique({
-    where: { lrn },
+  const viewer = await requireViewer(`/orders/${lrn}`);
+
+  // Scoping is part of the lookup: another account's LRN is simply not found.
+  const order = await prisma.order.findFirst({
+    where: { lrn, ...orderScope(viewer) },
     include: {
       boxes: { orderBy: { lineNumber: "asc" } },
       events: { orderBy: { createdAt: "desc" } },
@@ -111,7 +115,11 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
               icon={Radar}
               title="Movement"
               description={`Expected delivery ${formatDate(order.etaDate)} · ${order.transitDays} working day${order.transitDays === 1 ? "" : "s"} committed`}
-              action={<AddScanForm lrn={order.lrn} currentStatus={order.status} />}
+              action={
+                viewer.role === "USER" ? (
+                  <AddScanForm lrn={order.lrn} currentStatus={order.status} />
+                ) : null
+              }
             />
             <CardBody>
               <TrackingTimeline status={order.status} events={order.events} />

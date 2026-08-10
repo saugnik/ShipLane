@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Card, CardBody, CardFooter, EmptyState } from "@/components/ui/Card";
 import { Input, Select } from "@/components/ui/Field";
+import { orderScope, requireViewer } from "@/lib/auth/guard";
 import { prisma } from "@/lib/db";
 import { buildOrderFilter } from "@/lib/orderFilter";
 import {
@@ -25,12 +26,14 @@ const PAGE_SIZE = 20;
 type SearchParams = Promise<{ q?: string; status?: string; page?: string }>;
 
 export default async function OrdersPage({ searchParams }: { searchParams: SearchParams }) {
+  const viewer = await requireViewer("/orders");
   const params = await searchParams;
   const q = params.q?.trim() ?? "";
   const status = params.status?.trim() ?? "";
   const page = Math.max(1, Number(params.page ?? 1) || 1);
 
-  const where = buildOrderFilter(q, status);
+  // A USER's list is scoped to their own bookings; an ADMIN sees every row.
+  const where = { ...buildOrderFilter(q, status), ...orderScope(viewer) };
 
   const [orders, total] = await Promise.all([
     prisma.order.findMany({

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { AppShell } from "@/components/AppShell";
 import { ThemeScript } from "@/components/ThemeToggle";
 import { BRAND } from "@/lib/brand";
 import "./globals.css";
@@ -10,13 +9,17 @@ const mono = JetBrains_Mono({ variable: "--font-mono-stack", subsets: ["latin"],
 
 export const metadata: Metadata = {
   title: {
-    default: `${BRAND.name} — Freight console`,
+    default: `${BRAND.name} — B2B freight, booked in minutes`,
     template: `%s · ${BRAND.name}`,
   },
   description: BRAND.tagline,
   applicationName: BRAND.name,
 };
 
+/**
+ * Root layout carries only the document chrome. The signed-in shell lives in
+ * the (app) group, so public pages — landing, auth, tracking — render without it.
+ */
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -24,9 +27,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {/* Runs before paint so a dark-mode user never sees a white flash. */}
         <ThemeScript />
       </head>
-      <body className={`${inter.variable} ${mono.variable} antialiased`}>
-        <AppShell>{children}</AppShell>
-      </body>
+      <body className={`${inter.variable} ${mono.variable} antialiased`}>{children}</body>
     </html>
   );
 }

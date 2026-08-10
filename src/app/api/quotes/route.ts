@@ -1,4 +1,5 @@
 import { handle, HttpError } from "@/lib/api";
+import { apiViewer } from "@/lib/auth/guard";
 import { loadPartnerCommercials } from "@/lib/partners";
 import { quoteAll } from "@/lib/pricing";
 import { quoteRequestSchema } from "@/lib/validation";
@@ -10,6 +11,7 @@ import { quoteRequestSchema } from "@/lib/validation";
  */
 export async function POST(req: Request) {
   return handle(async () => {
+    await apiViewer();
     const body = await req.json();
     const input = quoteRequestSchema.parse(body);
 

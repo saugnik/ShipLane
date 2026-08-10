@@ -1,4 +1,5 @@
 import { handle, HttpError } from "@/lib/api";
+import { apiViewer, apiWriter, orderScope } from "@/lib/auth/guard";
 import { prisma } from "@/lib/db";
 import { generateDocumentNumbers } from "@/lib/ids";
 import { buildOrderFilter } from "@/lib/orderFilter";
@@ -11,12 +12,14 @@ const PAGE_SIZE = 20;
 /** Paginated order list with free-text search across LRN, docket and party names. */
 export async function GET(req: Request) {
   return handle(async () => {
+    const viewer = await apiViewer();
     const url = new URL(req.url);
     const q = url.searchParams.get("q")?.trim() ?? "";
     const status = url.searchParams.get("status")?.trim() ?? "";
     const page = Math.max(1, Number(url.searchParams.get("page") ?? 1) || 1);
 
-    const where = buildOrderFilter(q, status);
+    // A USER only ever sees their own bookings; an ADMIN sees every row.
+    const where = { ...buildOrderFilter(q, status), ...orderScope(viewer) };
 
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
@@ -47,6 +50,9 @@ export async function GET(req: Request) {
  */
 export async function POST(req: Request) {
   return handle(async () => {
+    // Booking is a USER action — the admin account is refused here.
+    const viewer = await apiWriter();
+
     const body = await req.json();
     const input = createOrderSchema.parse(body);
 
@@ -72,6 +78,7 @@ export async function POST(req: Request) {
         oid,
         mawb,
         status: "BOOKED",
+        createdById: viewer.sub,
 
         product: input.product,
 

@@ -1,275 +1,270 @@
 import Link from "next/link";
 import {
-  ArrowUpRight,
+  ArrowRight,
+  BadgeIndianRupee,
   Boxes,
-  IndianRupee,
-  PackagePlus,
+  FileText,
+  MapPin,
   Radar,
-  TrendingUp,
+  ShieldCheck,
+  Sparkles,
+  Tags,
   Truck,
-  Weight,
+  Zap,
 } from "lucide-react";
-import { PageHeader } from "@/components/AppShell";
-import { StatusBadge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
-import { Card, CardBody, CardHeader, EmptyState } from "@/components/ui/Card";
-import { prisma } from "@/lib/db";
-import { cn, formatDate, formatINRCompact, formatKg, relativeTime } from "@/lib/utils";
+import { Badge } from "@/components/ui/Badge";
+import { PublicHeader } from "@/components/marketing/PublicHeader";
+import { currentSession } from "@/lib/auth/session";
+import { BRAND, LR_TERMS } from "@/lib/brand";
 
-// Counts and recent activity must reflect the booking that was just made.
 export const dynamic = "force-dynamic";
 
-const MOVING = ["PICKED_UP", "IN_TRANSIT", "REACHED_DESTINATION_HUB", "OUT_FOR_DELIVERY"];
+const STEPS = [
+  { icon: MapPin, title: "Pick the lane", body: "Search pickup and drop on the map, or let the PIN code fill in city and state." },
+  { icon: Boxes, title: "Declare the cargo", body: "One row per carton size with a quantity — 200 identical boxes is one line, not 200." },
+  { icon: BadgeIndianRupee, title: "Compare carriers", body: "Every carrier on your panel priced on the same consignment, with the full charge breakup." },
+  { icon: FileText, title: "Print and hand over", body: "A three-copy Lorry Receipt and a scannable tag for every carton, generated instantly." },
+];
 
-async function loadDashboard() {
-  const [total, inTransit, delivered, aggregates, recent, carriers, byStatus] = await Promise.all([
-    prisma.order.count(),
-    prisma.order.count({ where: { status: { in: MOVING } } }),
-    prisma.order.count({ where: { status: "DELIVERED" } }),
-    prisma.order.aggregate({ _sum: { grandTotal: true, chargedWeight: true, totalBoxes: true } }),
-    prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
-    prisma.partner.count({ where: { active: true } }),
-    prisma.order.groupBy({ by: ["partnerName"], _count: { _all: true }, _sum: { grandTotal: true } }),
-  ]);
+const FEATURES = [
+  {
+    icon: BadgeIndianRupee,
+    title: "Rate shopping that adds up",
+    body: "Contracted lane rates with the most specific match winning. Freight, docket, fuel, FOV, ODA, COD and GST are all itemised — and the price is frozen onto the LR so the invoice can never disagree.",
+  },
+  {
+    icon: Tags,
+    title: "Documents, not paperwork",
+    body: "Lorry Receipt in shipper, POD and recipient copies, plus one 4×2in thermal tag per carton with its own Code128 barcode. Numbered continuously so every box has one unambiguous identity.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Compliance built in",
+    body: "E-Way Bill is enforced above ₹50,000 rather than failing at a check post. GSTIN format and its state code are validated against the address as you type.",
+  },
+  {
+    icon: Radar,
+    title: "Tracking anyone can use",
+    body: "A public LRN lookup that shows movement and nothing else — no pricing, no contact details, no invoice values leak to whoever holds the number.",
+  },
+];
 
-  return {
-    total,
-    inTransit,
-    delivered,
-    freight: aggregates._sum.grandTotal ?? 0,
-    weight: aggregates._sum.chargedWeight ?? 0,
-    cartons: aggregates._sum.totalBoxes ?? 0,
-    recent,
-    carriers,
-    byStatus: byStatus
-      .filter((r) => r.partnerName)
-      .sort((a, b) => (b._sum.grandTotal ?? 0) - (a._sum.grandTotal ?? 0)),
-  };
-}
-
-export default async function DashboardPage() {
-  const d = await loadDashboard();
-  const topSpend = d.byStatus[0]?._sum.grandTotal ?? 0;
+export default async function LandingPage() {
+  const session = await currentSession();
 
   return (
-    <>
-      <PageHeader
-        eyebrow="Overview"
-        title="Freight console"
-        description="Everything moving right now, and what it is costing you."
-        action={
-          <div className="flex gap-2">
-            <ButtonLink href="/track" variant="secondary">
-              <Radar className="size-4" />
-              Track
+    <div className="min-h-dvh bg-canvas">
+      <PublicHeader signedIn={Boolean(session)} />
+
+      {/* ------------------------------------------------------------ hero */}
+      <section className="relative overflow-hidden border-b border-line">
+        <div className="grid-paper pointer-events-none absolute inset-0 opacity-70" aria-hidden />
+        <div
+          className="pointer-events-none absolute -top-40 left-1/2 size-[680px] -translate-x-1/2 rounded-full opacity-25 blur-3xl"
+          style={{ background: "radial-gradient(circle, var(--color-brand-500), transparent 65%)" }}
+          aria-hidden
+        />
+
+        <div className="relative mx-auto max-w-6xl px-4 py-20 text-center sm:px-6 lg:py-28">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-[11px] font-semibold text-ink-2 shadow-xs">
+            <Sparkles className="size-3 text-brand-500" />
+            Built for B2B part-truckload freight
+          </span>
+
+          <h1 className="mx-auto mt-6 max-w-3xl text-4xl leading-[1.08] font-bold tracking-[-0.035em] text-ink sm:text-5xl lg:text-6xl">
+            Book freight, compare carriers and print the LR
+            <span className="text-brand-600 dark:text-brand-400"> in one pass</span>
+          </h1>
+
+          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-ink-2">
+            Capture the lane, the paperwork and the cartons once. {BRAND.name} rates it across your
+            entire carrier panel and generates every document the driver needs — before the vehicle
+            reaches your dock.
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <ButtonLink href={session ? "/dashboard" : "/register"} size="lg">
+              {session ? "Open the console" : "Create your account"}
+              <ArrowRight className="size-4" />
             </ButtonLink>
-            <ButtonLink href="/book">
-              <PackagePlus className="size-4" />
-              New booking
+            <ButtonLink href="/track" variant="secondary" size="lg">
+              <Radar className="size-4" />
+              Track a shipment
             </ButtonLink>
           </div>
-        }
-      />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat
-          icon={Boxes}
-          label="Consignments"
-          value={String(d.total)}
-          sub={`${d.cartons.toLocaleString("en-IN")} cartons manifested`}
-        />
-        <Stat
-          icon={Truck}
-          label="In transit"
-          value={String(d.inTransit)}
-          sub={`${d.delivered} delivered to date`}
-          accent
-          progress={d.total ? d.inTransit / d.total : 0}
-        />
-        <Stat
-          icon={Weight}
-          label="Chargeable weight"
-          value={formatKg(d.weight)}
-          sub="Billed across all bookings"
-        />
-        <Stat
-          icon={IndianRupee}
-          label="Freight spend"
-          value={formatINRCompact(d.freight)}
-          sub={`${d.carriers} carriers on panel`}
-        />
-      </div>
+          <p className="mt-4 text-xs text-ink-3">
+            Sign in with a one-time code — no password to remember or leak.
+          </p>
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_320px]">
-        <Card className="min-w-0">
-          <CardHeader
-            title="Recent consignments"
-            description="The last eight bookings across every lane."
-            action={
-              <Link
-                href="/orders"
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-brand-600 transition-colors hover:bg-brand-500/10 dark:text-brand-300"
-              >
-                View all
-                <ArrowUpRight className="size-3.5" />
-              </Link>
-            }
-          />
-          <CardBody className="p-0">
-            {d.recent.length === 0 ? (
-              <div className="p-5">
-                <EmptyState
-                  icon={PackagePlus}
-                  title="No consignments yet"
-                  description="Book your first shipment to generate an LR, box tags and a live tracking trail."
-                  action={<ButtonLink href="/book">Book a shipment</ButtonLink>}
-                />
+          {/* Proof strip */}
+          <dl className="mx-auto mt-14 grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-card)] border border-line bg-line shadow-sm sm:grid-cols-4">
+            {[
+              ["5", "carriers rated per booking"],
+              ["3", "LR copies generated"],
+              ["1 tag", "per physical carton"],
+              ["₹50k", "E-Way Bill threshold enforced"],
+            ].map(([value, label]) => (
+              <div key={label} className="bg-surface px-4 py-5">
+                <dt className="tnum text-xl font-bold tracking-[-0.02em] text-ink">{value}</dt>
+                <dd className="mt-1 text-[11px] leading-snug text-ink-3">{label}</dd>
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px] text-left text-[13px]">
-                  <thead>
-                    <tr className="border-b border-line [&>th]:label-caps [&>th]:px-5 [&>th]:py-2.5">
-                      <th>LRN</th>
-                      <th>Lane</th>
-                      <th>Carrier</th>
-                      <th className="text-right">Boxes</th>
-                      <th className="text-right">Weight</th>
-                      <th className="text-right">Freight</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {d.recent.map((order) => (
-                      <tr
-                        key={order.id}
-                        className="border-b border-line-soft transition-colors last:border-0 hover:bg-sunken"
-                      >
-                        <td className="px-5 py-3">
-                          <Link
-                            href={`/orders/${order.lrn}`}
-                            className="docnum text-[13px] font-semibold text-brand-600 hover:underline dark:text-brand-300"
-                          >
-                            {order.lrn}
-                          </Link>
-                          <p className="mt-0.5 text-[11px] text-ink-4">
-                            {relativeTime(order.createdAt)}
-                          </p>
-                        </td>
-                        <td className="px-5 py-3">
-                          <p className="font-medium text-ink">
-                            {order.pickupCity} <span className="text-ink-4">→</span> {order.dropCity}
-                          </p>
-                          <p className="mt-0.5 text-[11px] text-ink-4">
-                            ETA {formatDate(order.etaDate)}
-                          </p>
-                        </td>
-                        <td className="px-5 py-3 text-ink-2">{order.partnerName ?? "—"}</td>
-                        <td className="tnum px-5 py-3 text-right text-ink-2">{order.totalBoxes}</td>
-                        <td className="tnum px-5 py-3 text-right text-ink-2">
-                          {formatKg(order.chargedWeight)}
-                        </td>
-                        <td className="tnum px-5 py-3 text-right font-semibold text-ink">
-                          {formatINRCompact(order.grandTotal)}
-                        </td>
-                        <td className="px-5 py-3">
-                          <StatusBadge status={order.status} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardBody>
-        </Card>
-
-        {/* Carrier spend — a simple bar chart reads faster than a table here. */}
-        <Card className="min-w-0">
-          <CardHeader icon={TrendingUp} title="Spend by carrier" description="Freight billed, all time." />
-          <CardBody className="flex flex-col gap-4">
-            {d.byStatus.length === 0 ? (
-              <p className="py-6 text-center text-xs text-ink-3">
-                Book a consignment to see carrier spend.
-              </p>
-            ) : (
-              d.byStatus.map((row) => {
-                const value = row._sum.grandTotal ?? 0;
-                const pct = topSpend > 0 ? Math.max(3, (value / topSpend) * 100) : 0;
-                return (
-                  <div key={row.partnerName}>
-                    <div className="mb-1.5 flex items-baseline justify-between gap-3">
-                      <span className="truncate text-xs font-medium text-ink-2">
-                        {row.partnerName}
-                      </span>
-                      <span className="tnum shrink-0 text-xs font-semibold text-ink">
-                        {formatINRCompact(value)}
-                      </span>
-                    </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-inset">
-                      <div
-                        className="h-full rounded-full bg-brand-500 transition-[width] duration-500"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <p className="mt-1 text-[11px] text-ink-4">
-                      {row._count._all} consignment{row._count._all === 1 ? "" : "s"}
-                    </p>
-                  </div>
-                );
-              })
-            )}
-          </CardBody>
-        </Card>
-      </div>
-    </>
-  );
-}
-
-function Stat({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  accent,
-  progress,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  sub: string;
-  accent?: boolean;
-  progress?: number;
-}) {
-  return (
-    <div className="group relative overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-sm transition-shadow hover:shadow-md">
-      <div className="flex items-start justify-between gap-3">
-        <p className="label-caps">{label}</p>
-        <span
-          className={cn(
-            "grid size-8 shrink-0 place-items-center rounded-[10px] ring-1 ring-inset transition-colors",
-            accent
-              ? "bg-brand-500/10 text-brand-600 ring-brand-500/15 dark:text-brand-300"
-              : "bg-inset text-ink-3 ring-line-soft",
-          )}
-        >
-          <Icon className="size-4" />
-        </span>
-      </div>
-
-      <p className="tnum mt-3 text-[26px] leading-none font-bold tracking-[-0.03em] text-ink">
-        {value}
-      </p>
-      <p className="mt-2 text-xs text-ink-3">{sub}</p>
-
-      {typeof progress === "number" && (
-        <div className="mt-3 h-1 overflow-hidden rounded-full bg-inset">
-          <div
-            className="h-full rounded-full bg-brand-500"
-            style={{ width: `${Math.round(progress * 100)}%` }}
-          />
+            ))}
+          </dl>
         </div>
-      )}
+      </section>
+
+      {/* ------------------------------------------------------------ how */}
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <div className="text-center">
+          <p className="label-caps">How it works</p>
+          <h2 className="mt-2 text-2xl font-bold tracking-[-0.025em] text-ink sm:text-3xl">
+            Four steps from enquiry to handover
+          </h2>
+        </div>
+
+        <ol className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {STEPS.map((step, i) => (
+            <li
+              key={step.title}
+              className="relative rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-sm"
+            >
+              <span className="grid size-10 place-items-center rounded-[11px] bg-brand-500/10 text-brand-600 ring-1 ring-inset ring-brand-500/15 dark:text-brand-300">
+                <step.icon className="size-5" />
+              </span>
+              <span className="tnum absolute top-5 right-5 text-xs font-bold text-ink-4">
+                0{i + 1}
+              </span>
+              <h3 className="mt-4 text-sm font-semibold text-ink">{step.title}</h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-ink-3">{step.body}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* ------------------------------------------------------------ features */}
+      <section className="border-y border-line bg-sunken">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+          <div className="max-w-2xl">
+            <p className="label-caps">What you get</p>
+            <h2 className="mt-2 text-2xl font-bold tracking-[-0.025em] text-ink sm:text-3xl">
+              The parts of freight that usually go wrong
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-ink-2">
+              Wrong weights, missing e-way bills, boxes nobody can identify at a transshipment hub.
+              Each one is a design decision here, not an afterthought.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-4 md:grid-cols-2">
+            {FEATURES.map((f) => (
+              <div
+                key={f.title}
+                className="rounded-[var(--radius-card)] border border-line bg-surface p-6 shadow-sm"
+              >
+                <span className="grid size-10 place-items-center rounded-[11px] bg-brand-500/10 text-brand-600 ring-1 ring-inset ring-brand-500/15 dark:text-brand-300">
+                  <f.icon className="size-5" />
+                </span>
+                <h3 className="mt-4 text-[15px] font-semibold text-ink">{f.title}</h3>
+                <p className="mt-2 text-[13px] leading-relaxed text-ink-2">{f.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------ roles */}
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <div className="grid items-center gap-10 lg:grid-cols-2">
+          <div>
+            <p className="label-caps">Access</p>
+            <h2 className="mt-2 text-2xl font-bold tracking-[-0.025em] text-ink sm:text-3xl">
+              Your team books. Oversight only watches.
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-ink-2">
+              Accounts create and manage their own consignments and never see anyone else&apos;s.
+              Nothing on the platform can be deleted — a booked consignment is a commercial record,
+              so it is superseded, never erased.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              <Badge tone="brand">
+                <Zap className="size-3" /> One-time code sign-in
+              </Badge>
+              <Badge tone="neutral">Scoped to your own bookings</Badge>
+              <Badge tone="success">Immutable records</Badge>
+            </div>
+          </div>
+
+          <div className="rounded-[var(--radius-card)] border border-line bg-surface p-6 shadow-md">
+            <div className="flex items-center gap-2.5 border-b border-line pb-4">
+              <span className="grid size-9 place-items-center rounded-[10px] bg-brand-600 text-white">
+                <Truck className="size-4" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-ink">Ready in under a minute</p>
+                <p className="text-xs text-ink-3">Email, a code, and you are in.</p>
+              </div>
+            </div>
+            <ul className="mt-4 flex flex-col gap-3">
+              {[
+                "No password to set, forget or have stolen",
+                "Your consignments stay private to your account",
+                "Documents download the moment a booking is confirmed",
+              ].map((line) => (
+                <li key={line} className="flex items-start gap-2.5 text-[13px] text-ink-2">
+                  <ShieldCheck className="mt-px size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  {line}
+                </li>
+              ))}
+            </ul>
+            <ButtonLink href={session ? "/dashboard" : "/register"} className="mt-6 w-full">
+              {session ? "Open the console" : "Get started free"}
+              <ArrowRight className="size-4" />
+            </ButtonLink>
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------ footer */}
+      <footer className="border-t border-line bg-surface">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            <div className="max-w-sm">
+              <div className="flex items-center gap-2.5">
+                <span className="grid size-8 place-items-center rounded-[10px] bg-brand-600 text-white">
+                  <Truck className="size-4" />
+                </span>
+                <span className="text-sm font-bold tracking-[-0.02em] text-ink">{BRAND.name}</span>
+              </div>
+              <p className="mt-3 text-xs leading-relaxed text-ink-3">{BRAND.legalName}</p>
+              <p className="mt-1 text-xs leading-relaxed text-ink-4">{BRAND.registeredOffice}</p>
+            </div>
+
+            <div className="flex gap-10 text-xs">
+              <div>
+                <p className="label-caps mb-2">Product</p>
+                <ul className="flex flex-col gap-1.5 text-ink-2">
+                  <li><Link href="/register" className="hover:text-ink">Create account</Link></li>
+                  <li><Link href="/login" className="hover:text-ink">Sign in</Link></li>
+                  <li><Link href="/track" className="hover:text-ink">Track a shipment</Link></li>
+                </ul>
+              </div>
+              <div>
+                <p className="label-caps mb-2">Contact</p>
+                <ul className="flex flex-col gap-1.5 text-ink-2">
+                  <li>{BRAND.supportPhone}</li>
+                  <li className="break-all">{BRAND.supportEmail}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <p className="mt-8 border-t border-line pt-6 text-[11px] leading-relaxed text-ink-4">
+            {LR_TERMS}
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
