@@ -19,11 +19,12 @@ export type CreatedOrder = {
   dropState: string;
   pickupCity: string;
   pickupState: string;
-  boxes: Array<{ boxNumber: number; awb: string }>;
+  totalBoxes: number;
+  boxes: Array<{ lineNumber: number; quantity: number }>;
 };
 
 export function BookingSuccess({ order, onNew }: { order: CreatedOrder; onNew: () => void }) {
-  const boxCount = order.boxes.length;
+  const boxCount = order.totalBoxes;
 
   return (
     <div className="animate-in-up mx-auto flex max-w-3xl flex-col gap-5">

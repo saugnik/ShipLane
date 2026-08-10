@@ -57,10 +57,17 @@ export const invoiceSchema = z.object({
     .optional(),
 });
 
+/** One manifest line: `quantity` identical cartons of a single size. */
 export const boxSchema = z.object({
-  boxNumber: z.coerce.number().int().min(1),
+  lineNumber: z.coerce.number().int().min(1),
+  quantity: z.coerce
+    .number()
+    .int("Box quantity must be a whole number")
+    .gt(0, "Box quantity must be at least 1")
+    .max(5000, "Split lines above 5000 cartons"),
   description: required("Product description").max(200),
   referenceId: optionalText,
+  // Per carton — the line total is quantity x this.
   weightKg: z.coerce.number().gt(0, "Weight must be greater than 0").max(20000),
   lengthCm: z.coerce.number().gt(0, "Length must be greater than 0").max(1200),
   widthCm: z.coerce.number().gt(0, "Breadth must be greater than 0").max(1200),
@@ -112,11 +119,15 @@ export const createOrderSchema = z
         message: `E-Way Bill is mandatory for invoice value above ₹${EWAY_BILL_THRESHOLD.toLocaleString("en-IN")}`,
       });
     }
-    // Box numbers are printed on the tags and scanned at every hop; duplicates
-    // would make two physical boxes indistinguishable.
-    const numbers = val.boxes.map((b) => b.boxNumber);
-    if (new Set(numbers).size !== numbers.length) {
-      ctx.addIssue({ code: "custom", path: ["boxes"], message: "Box numbers must be unique" });
+    // Individual box tags are expanded from the line quantities, so an
+    // unbounded total would try to render thousands of label pages.
+    const totalBoxes = val.boxes.reduce((sum, b) => sum + b.quantity, 0);
+    if (totalBoxes > 2000) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["boxes"],
+        message: `A single consignment cannot exceed 2000 cartons (this one has ${totalBoxes})`,
+      });
     }
     if (val.pickup.pincode === val.drop.pincode) {
       ctx.addIssue({

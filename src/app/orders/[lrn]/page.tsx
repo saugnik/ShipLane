@@ -47,7 +47,7 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
   const order = await prisma.order.findUnique({
     where: { lrn },
     include: {
-      boxes: { orderBy: { boxNumber: "asc" } },
+      boxes: { orderBy: { lineNumber: "asc" } },
       events: { orderBy: { createdAt: "desc" } },
     },
   });
@@ -156,8 +156,8 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
           <Card>
             <CardHeader
               icon={Boxes}
-              title={`Box manifest — ${order.boxes.length} carton${order.boxes.length === 1 ? "" : "s"}`}
-              description="Each row prints its own scannable tag."
+              title={`Box manifest — ${order.totalBoxes} carton${order.totalBoxes === 1 ? "" : "s"}`}
+              description={`${order.boxes.length} line${order.boxes.length === 1 ? "" : "s"}. Tags are numbered continuously across the consignment.`}
               action={
                 <a
                   href={`/api/orders/${order.lrn}/box-tags?download=1`}
@@ -173,33 +173,52 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
                 <table className="w-full min-w-[680px] text-left text-sm">
                   <thead className="border-b border-slate-200 bg-slate-50">
                     <tr className="[&>th]:label-caps [&>th]:px-5 [&>th]:py-2.5">
-                      <th>Box</th>
-                      <th>Box AWB</th>
+                      <th>Line</th>
+                      <th className="text-right">Qty</th>
+                      <th>Box tags</th>
                       <th>Description</th>
                       <th>Reference</th>
-                      <th className="text-right">Weight</th>
+                      <th className="text-right">Weight/box</th>
                       <th className="text-right">L × B × H</th>
+                      <th className="text-right">Line weight</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {order.boxes.map((box) => (
-                      <tr key={box.id}>
-                        <td className="tnum px-5 py-2.5 font-semibold text-slate-700">
-                          {box.boxNumber}
-                        </td>
-                        <td className="docnum px-5 py-2.5 text-slate-600">{box.awb}</td>
-                        <td className="px-5 py-2.5 text-slate-700">{box.description}</td>
-                        <td className="docnum px-5 py-2.5 text-slate-500">
-                          {box.referenceId || "—"}
-                        </td>
-                        <td className="tnum px-5 py-2.5 text-right text-slate-700">
-                          {formatKg(box.weightKg)}
-                        </td>
-                        <td className="tnum px-5 py-2.5 text-right text-slate-700">
-                          {box.lengthCm} × {box.widthCm} × {box.heightCm} cm
-                        </td>
-                      </tr>
-                    ))}
+                    {(() => {
+                      // Tag numbers run continuously across the consignment, so
+                      // each line shows the range its cartons occupy.
+                      let cursor = 0;
+                      return order.boxes.map((box) => {
+                        const from = cursor + 1;
+                        cursor += box.quantity;
+                        return (
+                          <tr key={box.id}>
+                            <td className="tnum px-5 py-2.5 font-semibold text-slate-700">
+                              {box.lineNumber}
+                            </td>
+                            <td className="tnum px-5 py-2.5 text-right font-semibold text-slate-800">
+                              {box.quantity}
+                            </td>
+                            <td className="docnum px-5 py-2.5 text-slate-600">
+                              {from === cursor ? `#${from}` : `#${from}–${cursor}`}
+                            </td>
+                            <td className="px-5 py-2.5 text-slate-700">{box.description}</td>
+                            <td className="docnum px-5 py-2.5 text-slate-500">
+                              {box.referenceId || "—"}
+                            </td>
+                            <td className="tnum px-5 py-2.5 text-right text-slate-700">
+                              {formatKg(box.weightKg)}
+                            </td>
+                            <td className="tnum px-5 py-2.5 text-right text-slate-700">
+                              {box.lengthCm} × {box.widthCm} × {box.heightCm} cm
+                            </td>
+                            <td className="tnum px-5 py-2.5 text-right font-medium text-slate-800">
+                              {formatKg(box.weightKg * box.quantity)}
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()}
                   </tbody>
                 </table>
               </div>

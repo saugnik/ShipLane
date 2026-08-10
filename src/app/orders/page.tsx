@@ -38,7 +38,6 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
-      include: { _count: { select: { boxes: true } } },
     }),
     prisma.order.count({ where }),
   ]);
@@ -168,7 +167,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                       </td>
                       <td className="px-5 py-3 text-slate-700">{order.partnerName ?? "—"}</td>
                       <td className="tnum px-5 py-3 text-right text-slate-700">
-                        {order._count.boxes}
+                        {order.totalBoxes}
                       </td>
                       <td className="tnum px-5 py-3 text-right text-slate-700">
                         {formatKg(order.chargedWeight)}

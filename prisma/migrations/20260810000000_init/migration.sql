@@ -90,6 +90,7 @@ CREATE TABLE "Order" (
     "partnerId" TEXT,
     "partnerName" TEXT,
     "partnerCode" TEXT,
+    "totalBoxes" INTEGER NOT NULL DEFAULT 0,
     "actualWeight" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "volumetricWeight" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "chargedWeight" DOUBLE PRECISION NOT NULL DEFAULT 0,
@@ -115,8 +116,8 @@ CREATE TABLE "Order" (
 CREATE TABLE "Box" (
     "id" TEXT NOT NULL,
     "orderId" TEXT NOT NULL,
-    "boxNumber" INTEGER NOT NULL,
-    "awb" TEXT NOT NULL,
+    "lineNumber" INTEGER NOT NULL,
+    "quantity" INTEGER NOT NULL,
     "description" TEXT NOT NULL,
     "referenceId" TEXT,
     "weightKg" DOUBLE PRECISION NOT NULL,
@@ -175,7 +176,7 @@ CREATE INDEX "Order_createdAt_idx" ON "Order"("createdAt");
 CREATE INDEX "Box_orderId_idx" ON "Box"("orderId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Box_orderId_boxNumber_key" ON "Box"("orderId", "boxNumber");
+CREATE UNIQUE INDEX "Box_orderId_lineNumber_key" ON "Box"("orderId", "lineNumber");
 
 -- CreateIndex
 CREATE INDEX "TrackingEvent_orderId_idx" ON "TrackingEvent"("orderId");

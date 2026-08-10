@@ -30,11 +30,13 @@ export type PartyForm = {
   lng?: number;
 };
 
+/** One manifest line in the wizard: `quantity` identical cartons. */
 export type BoxForm = {
   key: string;
-  boxNumber: string;
+  quantity: string;
   description: string;
   referenceId: string;
+  /** Per carton. */
   weightKg: string;
   lengthCm: string;
   widthCm: string;
@@ -81,9 +83,9 @@ export const emptyParty = (): PartyForm => ({
   gstin: "",
 });
 
-export const emptyBox = (key: string, boxNumber: number): BoxForm => ({
+export const emptyBox = (key: string): BoxForm => ({
   key,
-  boxNumber: String(boxNumber),
+  quantity: "1",
   description: "",
   referenceId: "",
   weightKg: "",
@@ -107,7 +109,7 @@ export const initialBooking = (): BookingState => ({
     saidToContain: "",
     remarks: "",
   },
-  boxes: [emptyBox("box-1", 1)],
+  boxes: [emptyBox("box-1")],
   partnerId: null,
 });
 
@@ -147,8 +149,11 @@ export function toCreatePayload(state: BookingState) {
       ewayBill: state.invoice.ewayBill,
     },
     shipment: state.shipment,
-    boxes: state.boxes.map((b) => ({
-      boxNumber: Number(b.boxNumber || 0),
+    // `lineNumber` is positional — the operator never types it, so it can never
+    // collide the way a hand-entered box number could.
+    boxes: state.boxes.map((b, i) => ({
+      lineNumber: i + 1,
+      quantity: Number(b.quantity || 0),
       description: b.description,
       referenceId: b.referenceId,
       weightKg: Number(b.weightKg || 0),
@@ -220,10 +225,10 @@ export function validateStep(step: StepId, state: BookingState): StepErrors {
           }
         }
       });
-      const numbers = payload.boxes.map((b) => b.boxNumber);
-      numbers.forEach((n, i) => {
-        if (numbers.indexOf(n) !== i) errors[`boxes.${i}.boxNumber`] = "Duplicate box number";
-      });
+      const totalBoxes = payload.boxes.reduce((sum, b) => sum + (b.quantity || 0), 0);
+      if (totalBoxes > 2000) {
+        errors["boxes"] = `A consignment cannot exceed 2000 cartons (this one has ${totalBoxes})`;
+      }
       return errors;
     }
 

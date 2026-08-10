@@ -25,7 +25,7 @@ export function StepReview({
   quote: Quote | null;
   onEdit: (step: StepId) => void;
 }) {
-  const boxCount = state.boxes.length;
+  const boxCount = state.boxes.reduce((sum, b) => sum + (Number(b.quantity) || 0), 0);
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
@@ -87,27 +87,34 @@ export function StepReview({
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50">
                   <tr className="[&>th]:label-caps [&>th]:px-3 [&>th]:py-2">
-                    <th>Box</th>
+                    <th className="text-right">Qty</th>
                     <th>Description</th>
                     <th>Reference</th>
-                    <th className="text-right">Weight</th>
+                    <th className="text-right">Weight/box</th>
                     <th className="text-right">L × B × H</th>
+                    <th className="text-right">Line weight</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {state.boxes.map((b) => (
-                    <tr key={b.key} className="[&>td]:px-3 [&>td]:py-2">
-                      <td className="tnum font-semibold text-slate-700">{b.boxNumber}</td>
-                      <td className="text-slate-700">{b.description || "—"}</td>
-                      <td className="docnum text-slate-500">{b.referenceId || "—"}</td>
-                      <td className="tnum text-right text-slate-700">
-                        {formatKg(Number(b.weightKg || 0))}
-                      </td>
-                      <td className="tnum text-right text-slate-700">
-                        {b.lengthCm || 0} × {b.widthCm || 0} × {b.heightCm || 0} cm
-                      </td>
-                    </tr>
-                  ))}
+                  {state.boxes.map((b) => {
+                    const qty = Number(b.quantity || 0);
+                    return (
+                      <tr key={b.key} className="[&>td]:px-3 [&>td]:py-2">
+                        <td className="tnum text-right font-semibold text-slate-700">{qty}</td>
+                        <td className="text-slate-700">{b.description || "—"}</td>
+                        <td className="docnum text-slate-500">{b.referenceId || "—"}</td>
+                        <td className="tnum text-right text-slate-700">
+                          {formatKg(Number(b.weightKg || 0))}
+                        </td>
+                        <td className="tnum text-right text-slate-700">
+                          {b.lengthCm || 0} × {b.widthCm || 0} × {b.heightCm || 0} cm
+                        </td>
+                        <td className="tnum text-right font-medium text-slate-800">
+                          {formatKg(Number(b.weightKg || 0) * qty)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

@@ -121,6 +121,10 @@ model Order {
   partnerName String?
   partnerCode String?
 
+  /// Physical carton count (sum of every line's quantity). Denormalised so
+  /// list views do not have to sum the manifest on every row.
+  totalBoxes Int @default(0)
+
   actualWeight     Float @default(0)
   volumetricWeight Float @default(0)
   chargedWeight    Float @default(0)
@@ -147,20 +151,26 @@ model Order {
   @@index([createdAt])
 }
 
+/// A manifest line: N identical cartons of one size.
+///
+/// Freight is quoted and printed per carton *type*, not per physical box —
+/// "50 Boxes: 40x40x20" is one line. Individual scannable box numbers are
+/// derived at print time by expanding `quantity`, so a 500-carton consignment
+/// is a handful of rows rather than 500.
 model Box {
   id          String  @id @default(cuid())
   order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId     String
-  boxNumber   Int
-  awb         String // per-box scannable barcode value
+  lineNumber  Int // position of this line in the manifest
+  quantity    Int // number of identical cartons on this line
   description String
   referenceId String?
-  weightKg    Float
+  weightKg    Float // per carton, not the line total
   lengthCm    Float
   widthCm     Float
   heightCm    Float
 
-  @@unique([orderId, boxNumber])
+  @@unique([orderId, lineNumber])
   @@index([orderId])
 }
 

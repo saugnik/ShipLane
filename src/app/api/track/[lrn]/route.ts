@@ -23,7 +23,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ lrn: string }>
         pickupState: true,
         dropCity: true,
         dropState: true,
-        _count: { select: { boxes: true } },
+        totalBoxes: true,
         events: {
           orderBy: { createdAt: "desc" },
           select: { status: true, location: true, remarks: true, createdAt: true },
@@ -32,7 +32,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ lrn: string }>
     });
     if (!order) throw notFound(`Consignment ${lrn}`);
 
-    const { _count, ...rest } = order;
-    return { shipment: { ...rest, boxCount: _count.boxes } };
+    const { totalBoxes, ...rest } = order;
+    return { shipment: { ...rest, boxCount: totalBoxes } };
   });
 }

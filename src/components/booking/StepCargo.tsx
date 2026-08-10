@@ -29,33 +29,39 @@ export function StepCargo({
   const setShipment = <K extends keyof ShipmentForm>(key: K, v: ShipmentForm[K]) =>
     onShipmentChange({ ...shipment, [key]: v });
 
+  /** Per-line figures, mirroring how a freight manifest is costed. */
+  const lines = useMemo(
+    () =>
+      boxes.map((b) => {
+        const qty = Math.max(0, Math.trunc(Number(b.quantity) || 0));
+        const perCarton =
+          ((Number(b.lengthCm) || 0) * (Number(b.widthCm) || 0) * (Number(b.heightCm) || 0)) /
+          PREVIEW_DIVISOR;
+        return {
+          qty,
+          perCarton,
+          lineVolumetric: perCarton * qty,
+          lineActual: (Number(b.weightKg) || 0) * qty,
+        };
+      }),
+    [boxes],
+  );
+
   const totals = useMemo(() => {
-    let actual = 0;
-    let volumetric = 0;
-    for (const b of boxes) {
-      actual += Number(b.weightKg) || 0;
-      volumetric +=
-        ((Number(b.lengthCm) || 0) * (Number(b.widthCm) || 0) * (Number(b.heightCm) || 0)) /
-        PREVIEW_DIVISOR;
-    }
-    return { actual, volumetric, chargeable: Math.max(actual, volumetric) };
-  }, [boxes]);
+    const actual = lines.reduce((s, l) => s + l.lineActual, 0);
+    const volumetric = lines.reduce((s, l) => s + l.lineVolumetric, 0);
+    const cartons = lines.reduce((s, l) => s + l.qty, 0);
+    return { actual, volumetric, cartons, chargeable: Math.max(actual, volumetric) };
+  }, [lines]);
 
-  const nextBoxNumber = () =>
-    boxes.reduce((max, b) => Math.max(max, Number(b.boxNumber) || 0), 0) + 1;
+  const addBox = () => onBoxesChange([...boxes, emptyBox(`box-${Date.now()}-${boxes.length}`)]);
 
-  const addBox = () => {
-    const n = nextBoxNumber();
-    onBoxesChange([...boxes, emptyBox(`box-${n}-${boxes.length}`, n)]);
-  };
-
-  /** Most consignments are N identical cartons; cloning beats retyping. */
+  /** Clone a line — handy when sizes differ only slightly. */
   const duplicateBox = (index: number) => {
     const source = boxes[index];
-    const n = nextBoxNumber();
     onBoxesChange([
       ...boxes.slice(0, index + 1),
-      { ...source, key: `box-${n}-${boxes.length}`, boxNumber: String(n) },
+      { ...source, key: `box-${Date.now()}-${boxes.length}` },
       ...boxes.slice(index + 1),
     ]);
   };
@@ -226,7 +232,7 @@ export function StepCargo({
         <CardHeader
           icon={Boxes}
           title="Box dimensions"
-          description="One row per carton. Each row prints its own scannable box tag."
+          description="One row per carton size. Enter how many identical cartons of that size, and the weight and dimensions of a single one."
           action={
             <div className="flex items-center gap-2">
               {boxes.length > 1 && (
@@ -237,7 +243,7 @@ export function StepCargo({
               )}
               <Button variant="secondary" size="sm" onClick={addBox} type="button">
                 <Plus className="size-3.5" />
-                Add box
+                Add row
               </Button>
             </div>
           }
@@ -245,14 +251,22 @@ export function StepCargo({
 
         <CardBody className="p-0">
           {/* Column headers — desktop only; each card repeats its labels on mobile. */}
-          <div className="hidden grid-cols-[56px_1.6fr_1fr_84px_repeat(3,72px)_40px] gap-2 border-b border-slate-200 bg-slate-50 px-5 py-2.5 lg:grid">
-            {["Box #", "Product description", "Reference ID", "Weight (kg)", "L (cm)", "B (cm)", "H (cm)", ""].map(
-              (h) => (
-                <span key={h} className="label-caps truncate">
-                  {h}
-                </span>
-              ),
-            )}
+          <div className="hidden grid-cols-[68px_1.4fr_1fr_86px_repeat(3,62px)_104px_40px] gap-2 border-b border-slate-200 bg-slate-50 px-5 py-2.5 lg:grid">
+            {[
+              "Box qty",
+              "Product description",
+              "Reference ID",
+              "Weight/box (kg)",
+              "L (cm)",
+              "B (cm)",
+              "H (cm)",
+              "Volumetric",
+              "",
+            ].map((h, i) => (
+              <span key={`${h}-${i}`} className="label-caps truncate">
+                {h}
+              </span>
+            ))}
           </div>
 
           <div className="divide-y divide-slate-100">
@@ -261,6 +275,7 @@ export function StepCargo({
                 key={box.key}
                 index={i}
                 box={box}
+                line={lines[i]}
                 errors={errors}
                 canRemove={boxes.length > 1}
                 onChange={(patch) => updateBox(i, patch)}
@@ -269,11 +284,21 @@ export function StepCargo({
               />
             ))}
           </div>
+
+          {errors["boxes"] && (
+            <p className="border-t border-rose-200 bg-rose-50 px-5 py-2.5 text-xs font-medium text-rose-700">
+              {errors["boxes"]}
+            </p>
+          )}
         </CardBody>
 
         <CardFooter>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <Summary label="Boxes" value={String(boxes.length)} />
+            <Summary
+              label="Total boxes"
+              value={String(totals.cartons)}
+              hint={`${boxes.length} manifest line${boxes.length === 1 ? "" : "s"}`}
+            />
             <Summary label="Actual weight" value={formatKg(totals.actual)} />
             <Summary label="Volumetric" value={formatKg(totals.volumetric)} />
             <Summary
@@ -325,6 +350,7 @@ function Summary({
 function BoxRow({
   index,
   box,
+  line,
   errors,
   canRemove,
   onChange,
@@ -333,6 +359,7 @@ function BoxRow({
 }: {
   index: number;
   box: BoxForm;
+  line: { qty: number; perCarton: number; lineVolumetric: number; lineActual: number };
   errors: StepErrors;
   canRemove: boolean;
   onChange: (patch: Partial<BoxForm>) => void;
@@ -340,7 +367,7 @@ function BoxRow({
   onRemove: () => void;
 }) {
   const err = (field: string) => errors[`boxes.${index}.${field}`];
-  const hasError = ["boxNumber", "description", "weightKg", "lengthCm", "widthCm", "heightCm"].some(
+  const hasError = ["quantity", "description", "weightKg", "lengthCm", "widthCm", "heightCm"].some(
     (f) => err(f),
   );
 
@@ -352,7 +379,7 @@ function BoxRow({
     <div className="flex flex-col gap-1">
       <span className="label-caps lg:hidden">{label}</span>
       <Input
-        aria-label={`Box ${box.boxNumber} ${label}`}
+        aria-label={`Line ${index + 1} ${label}`}
         invalid={Boolean(err(field))}
         value={box[field] as string}
         onChange={(e) => onChange({ [field]: e.target.value } as Partial<BoxForm>)}
@@ -365,37 +392,59 @@ function BoxRow({
   return (
     <div
       className={cn(
-        "grid grid-cols-2 gap-3 px-5 py-4 sm:grid-cols-3 lg:grid-cols-[56px_1.6fr_1fr_84px_repeat(3,72px)_40px] lg:items-start lg:gap-2",
+        "grid grid-cols-2 gap-3 px-5 py-4 sm:grid-cols-3 lg:grid-cols-[68px_1.4fr_1fr_86px_repeat(3,62px)_104px_40px] lg:items-start lg:gap-2",
         hasError && "bg-rose-50/40",
       )}
     >
-      {cell("Box #", "boxNumber", { inputMode: "numeric", className: "tnum text-center" })}
+      {cell("Box qty", "quantity", {
+        inputMode: "numeric",
+        min: 1,
+        step: 1,
+        type: "number",
+        className: "tnum text-center font-semibold",
+      })}
       {cell("Product description", "description", { placeholder: "e.g. Bamboo plates 9in" })}
       {cell("Reference ID", "referenceId", { placeholder: "Optional SKU / PO" })}
-      {cell("Weight (kg)", "weightKg", { type: "number", min: 0, step: "0.01", className: "tnum" })}
+      {cell("Weight/box (kg)", "weightKg", {
+        type: "number",
+        min: 0,
+        step: "0.01",
+        className: "tnum",
+      })}
       {cell("L (cm)", "lengthCm", { type: "number", min: 0, step: "0.1", className: "tnum" })}
       {cell("B (cm)", "widthCm", { type: "number", min: 0, step: "0.1", className: "tnum" })}
       {cell("H (cm)", "heightCm", { type: "number", min: 0, step: "0.1", className: "tnum" })}
+
+      {/* Derived, read-only: per-carton volumetric and the line total. */}
+      <div className="col-span-2 flex flex-col justify-center sm:col-span-3 lg:col-span-1 lg:pt-2">
+        <span className="label-caps lg:hidden">Volumetric</span>
+        <span className="tnum text-sm font-semibold text-slate-800">
+          {line.lineVolumetric.toFixed(2)} kg
+        </span>
+        <span className="tnum text-[11px] text-slate-500">
+          {line.perCarton.toFixed(2)} × {line.qty || 0}
+        </span>
+      </div>
 
       <div className="col-span-2 flex items-center justify-end gap-1 sm:col-span-3 lg:col-span-1 lg:pt-0.5">
         <button
           type="button"
           onClick={onDuplicate}
-          title="Duplicate this box"
+          title="Duplicate this line"
           className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
         >
           <Copy className="size-4" />
-          <span className="sr-only">Duplicate box {box.boxNumber}</span>
+          <span className="sr-only">Duplicate line {index + 1}</span>
         </button>
         <button
           type="button"
           onClick={onRemove}
           disabled={!canRemove}
-          title={canRemove ? "Remove this box" : "A consignment needs at least one box"}
+          title={canRemove ? "Remove this line" : "A consignment needs at least one line"}
           className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
         >
           <Trash2 className="size-4" />
-          <span className="sr-only">Remove box {box.boxNumber}</span>
+          <span className="sr-only">Remove line {index + 1}</span>
         </button>
       </div>
     </div>

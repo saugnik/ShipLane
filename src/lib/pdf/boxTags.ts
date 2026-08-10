@@ -1,6 +1,6 @@
 import { PDFDocument, PDFPage, StandardFonts } from "pdf-lib";
 import { BRAND } from "@/lib/brand";
-import { formatAddress, partyName, type ShipmentDoc } from "@/lib/documents";
+import { expandBoxes, formatAddress, partyName, type ShipmentDoc } from "@/lib/documents";
 import { documentTagId } from "@/lib/docNumbers";
 import { code128 } from "@/lib/pdf/barcode";
 import {
@@ -29,10 +29,14 @@ const shortDate = (d: Date) =>
   d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
 export async function renderBoxTagsPdf(doc: ShipmentDoc): Promise<Uint8Array> {
+  // One label per physical carton — a line of 50 produces 50 tags.
+  const cartons = expandBoxes(doc.lrn, doc.boxes);
+  const total = cartons.length;
+
   const pdf = await PDFDocument.create();
   pdf.setTitle(`Box tags ${doc.lrn} — ${BRAND.name}`);
   pdf.setAuthor(BRAND.legalName);
-  pdf.setSubject(`${doc.boxes.length} carton labels for consignment ${doc.lrn}`);
+  pdf.setSubject(`${total} carton labels for consignment ${doc.lrn}`);
 
   const fonts: Fonts = {
     regular: await pdf.embedFont(StandardFonts.Helvetica),
@@ -40,16 +44,23 @@ export async function renderBoxTagsPdf(doc: ShipmentDoc): Promise<Uint8Array> {
   };
 
   const lrnStrip = await pdf.embedPng(await code128(doc.lrn, { heightMm: 5, scale: 3 }));
-  const total = doc.boxes.length;
   const date = shortDate(doc.createdAt);
   const consigneeName = partyName(doc.consignee);
   const consigneeAddress = formatAddress(doc.consignee);
+  const multiLine = doc.boxes.length > 1;
 
-  for (const box of doc.boxes) {
+  for (const box of cartons) {
     const page = pdf.addPage([TAG_W, TAG_H]);
     const awbStrip = await pdf.embedPng(await code128(box.awb, { heightMm: 8, scale: 3 }));
+
+    // On a multi-line manifest the packer needs to know which line a carton
+    // belongs to, not just its position in the consignment.
+    const lineNote = multiLine
+      ? `Line ${box.lineNumber} (${box.indexInLine}/${doc.boxes[box.lineNumber - 1]?.quantity ?? "?"}) · ${box.description}`
+      : box.description;
+
     drawTag(page, fonts, {
-      heading: `BOX ${box.boxNumber} / ${total}`,
+      heading: `BOX ${box.index} / ${total}`,
       primaryLabel: "BOX AWB",
       primaryValue: box.awb,
       primaryBarcode: awbStrip,
@@ -61,7 +72,7 @@ export async function renderBoxTagsPdf(doc: ShipmentDoc): Promise<Uint8Array> {
       client: doc.shipper.company,
       consigneeName,
       consigneeAddress,
-      footnote: box.referenceId ? `Ref: ${box.referenceId}` : box.description,
+      footnote: box.referenceId ? `${lineNote} · Ref: ${box.referenceId}` : lineNote,
     });
   }
 

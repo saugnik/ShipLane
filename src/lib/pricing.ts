@@ -42,10 +42,14 @@ export type PartnerCommercials = {
   rates: RateRow[];
 };
 
+/** One manifest line: `quantity` identical cartons. */
 export type BoxInput = {
-  boxNumber?: number;
+  lineNumber?: number;
+  /** Number of identical cartons on this line. */
+  quantity: number;
   description?: string;
   referenceId?: string | null;
+  /** Weight of a single carton, not the line total. */
   weightKg: number;
   lengthCm: number;
   widthCm: number;
@@ -82,6 +86,7 @@ export type PriceBreakup = {
 };
 
 export type Quote = PriceBreakup & {
+  totalBoxes: number;
   partnerId: string;
   partnerCode: string;
   partnerName: string;
@@ -163,15 +168,42 @@ function fallbackRate(partner: PartnerCommercials, req: QuoteRequest): RateRow {
   };
 }
 
+/**
+ * Consignment weights.
+ *
+ * Both figures are per-carton values multiplied by the line quantity:
+ *
+ *   volumetric per carton = (L x W x H) / divisor
+ *   line volumetric       = per carton x quantity
+ *
+ * so a line of 50 cartons at 40x40x20 with divisor 5000 contributes
+ * 6.4 x 50 = 320 kg, not 6.4 kg.
+ */
 export function weighBoxes(boxes: BoxInput[], volumetricDivisor: number) {
   let actual = 0;
   let volumetric = 0;
+  let count = 0;
+
   for (const b of boxes) {
-    actual += Number(b.weightKg) || 0;
+    const qty = Math.max(0, Math.trunc(Number(b.quantity) || 0));
+    count += qty;
+    actual += (Number(b.weightKg) || 0) * qty;
+
     const cft = (Number(b.lengthCm) || 0) * (Number(b.widthCm) || 0) * (Number(b.heightCm) || 0);
-    volumetric += cft / volumetricDivisor;
+    volumetric += (cft / volumetricDivisor) * qty;
   }
-  return { actualWeight: round2(actual), volumetricWeight: round2(volumetric) };
+
+  return {
+    actualWeight: round2(actual),
+    volumetricWeight: round2(volumetric),
+    totalBoxes: count,
+  };
+}
+
+/** Volumetric weight of a single carton on a line — shown per row in the UI. */
+export function volumetricPerCarton(b: BoxInput, volumetricDivisor: number): number {
+  const cft = (Number(b.lengthCm) || 0) * (Number(b.widthCm) || 0) * (Number(b.heightCm) || 0);
+  return round2(cft / volumetricDivisor);
 }
 
 /** Working days only — carriers do not run line-haul on Sundays. */
@@ -193,7 +225,10 @@ export function priceWithPartner(
   const matched = pickRate(partner, req);
   const rate = matched ?? fallbackRate(partner, req);
 
-  const { actualWeight, volumetricWeight } = weighBoxes(req.boxes, partner.volumetricDivisor);
+  const { actualWeight, volumetricWeight, totalBoxes } = weighBoxes(
+    req.boxes,
+    partner.volumetricDivisor,
+  );
 
   // Carriers bill on the greater of dead weight and volumetric weight, subject
   // to a per-consignment floor.
@@ -232,6 +267,7 @@ export function priceWithPartner(
     accent: partner.accent,
     modes: partner.modes,
     services: partner.services,
+    totalBoxes,
     actualWeight,
     volumetricWeight,
     chargedWeight,

@@ -7,7 +7,7 @@
  * demo at all.
  */
 import type { PrismaClient } from "../src/generated/prisma";
-import { boxAwb, formatDocumentNumbers } from "../src/lib/docNumbers";
+import { formatDocumentNumbers } from "../src/lib/docNumbers";
 import { priceWithPartner, type PartnerCommercials } from "../src/lib/pricing";
 
 type Party = {
@@ -347,18 +347,17 @@ export async function seedDemoOrders(
     const partner = byCode.get(demo.partnerCode);
     if (!partner) continue;
 
-    // Expand the grouped carton spec into individual boxes.
-    const boxes = demo.boxes.flatMap((group, gi) =>
-      Array.from({ length: group.count }, (_, i) => ({
-        boxNumber: gi * 100 + i + 1,
-        description: group.description,
-        referenceId: `${group.ref}-${String(i + 1).padStart(2, "0")}`,
-        weightKg: group.kg,
-        lengthCm: group.dims[0],
-        widthCm: group.dims[1],
-        heightCm: group.dims[2],
-      })),
-    );
+    // Each demo spec is already a manifest line: N identical cartons.
+    const boxes = demo.boxes.map((group, gi) => ({
+      lineNumber: gi + 1,
+      quantity: group.count,
+      description: group.description,
+      referenceId: group.ref,
+      weightKg: group.kg,
+      lengthCm: group.dims[0],
+      widthCm: group.dims[1],
+      heightCm: group.dims[2],
+    }));
 
     const bookedAt = hoursAgo(now, demo.bookedDaysAgo * 24 + 3);
 
@@ -445,10 +444,12 @@ export async function seedDemoOrders(
         transitDays: quote.transitDays,
         etaDate: new Date(quote.etaDate),
 
+        totalBoxes: quote.totalBoxes,
+
         boxes: {
           create: boxes.map((b) => ({
-            boxNumber: b.boxNumber,
-            awb: boxAwb(lrn, b.boxNumber),
+            lineNumber: b.lineNumber,
+            quantity: b.quantity,
             description: b.description,
             referenceId: b.referenceId,
             weightKg: b.weightKg,

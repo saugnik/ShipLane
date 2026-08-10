@@ -1,6 +1,12 @@
 import { PDFDocument, PDFPage, StandardFonts, rgb } from "pdf-lib";
 import { BRAND, LR_TERMS } from "@/lib/brand";
-import { groupByDimension, partyName, type DocParty, type ShipmentDoc } from "@/lib/documents";
+import {
+  groupByDimension,
+  partyName,
+  totalBoxCount,
+  type DocParty,
+  type ShipmentDoc,
+} from "@/lib/documents";
 import { code128 } from "@/lib/pdf/barcode";
 import {
   BRAND as BRAND_INK,
@@ -400,13 +406,16 @@ function drawBoxTable(
   // Totals band, ruled off from the rows above it.
   rect(page, M, y, CONTENT_W, totalH, { fill: FILL });
   hline(page, M, y + totalH, CONTENT_W, LINE);
-  text(page, `TOTAL NUMBER OF BOXES: ${doc.boxes.length}`, M + 6, y + 4.5, {
+  // Physical cartons, not manifest lines.
+  const cartons = totalBoxCount(doc.boxes);
+
+  text(page, `TOTAL NUMBER OF BOXES: ${cartons}`, M + 6, y + 4.5, {
     font: fonts.bold,
     size: 8,
     color: INK,
   });
 
-  const handover = `${doc.boxes.length} box(es) to be handed over by shipper`;
+  const handover = `${cartons} box(es) to be handed over by shipper`;
   const hw = fonts.regular.widthOfTextAtSize(handover, 7);
   text(page, handover, M + CONTENT_W - hw - 8, y + 4.8, {
     font: fonts.regular,

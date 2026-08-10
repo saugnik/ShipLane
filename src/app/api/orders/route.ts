@@ -1,6 +1,6 @@
 import { handle, HttpError } from "@/lib/api";
 import { prisma } from "@/lib/db";
-import { boxAwb, generateDocumentNumbers } from "@/lib/ids";
+import { generateDocumentNumbers } from "@/lib/ids";
 import { buildOrderFilter } from "@/lib/orderFilter";
 import { loadPartnerCommercials } from "@/lib/partners";
 import { priceWithPartner } from "@/lib/pricing";
@@ -24,13 +24,12 @@ export async function GET(req: Request) {
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * PAGE_SIZE,
         take: PAGE_SIZE,
-        include: { _count: { select: { boxes: true } } },
       }),
       prisma.order.count({ where }),
     ]);
 
     return {
-      orders: orders.map((o) => ({ ...o, boxCount: o._count.boxes })),
+      orders: orders.map((o) => ({ ...o, boxCount: o.totalBoxes })),
       page,
       pageSize: PAGE_SIZE,
       total,
@@ -134,10 +133,12 @@ export async function POST(req: Request) {
         transitDays: quote.transitDays,
         etaDate: new Date(quote.etaDate),
 
+        totalBoxes: quote.totalBoxes,
+
         boxes: {
-          create: input.boxes.map((b) => ({
-            boxNumber: b.boxNumber,
-            awb: boxAwb(lrn, b.boxNumber),
+          create: input.boxes.map((b, i) => ({
+            lineNumber: i + 1,
+            quantity: b.quantity,
             description: b.description,
             referenceId: b.referenceId ?? null,
             weightKg: b.weightKg,
@@ -150,7 +151,7 @@ export async function POST(req: Request) {
           create: {
             status: "BOOKED",
             location: `${input.pickup.city}, ${input.pickup.state}`,
-            remarks: `Consignment booked with ${partner.name}. ${input.boxes.length} box(es) manifested.`,
+            remarks: `Consignment booked with ${partner.name}. ${quote.totalBoxes} box(es) across ${input.boxes.length} manifest line(s).`,
           },
         },
       },

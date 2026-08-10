@@ -18,9 +18,27 @@ export type DocParty = {
   gstin: string | null;
 };
 
+/** A manifest line as printed on the LR. */
 export type DocBox = {
-  boxNumber: number;
+  lineNumber: number;
+  quantity: number;
+  description: string;
+  referenceId: string | null;
+  /** Per carton. */
+  weightKg: number;
+  lengthCm: number;
+  widthCm: number;
+  heightCm: number;
+};
+
+/** A single physical carton, expanded from a line for tag printing. */
+export type PhysicalBox = {
+  /** 1-based index across the whole consignment. */
+  index: number;
   awb: string;
+  lineNumber: number;
+  /** Position within its own line, e.g. 3 of 50. */
+  indexInLine: number;
   description: string;
   referenceId: string | null;
   weightKg: number;
@@ -137,10 +155,10 @@ export function toShipmentDoc(order: Order & { boxes: Box[] }): ShipmentDoc {
     },
     boxes: order.boxes
       .slice()
-      .sort((a, b) => a.boxNumber - b.boxNumber)
+      .sort((a, b) => a.lineNumber - b.lineNumber)
       .map((b) => ({
-        boxNumber: b.boxNumber,
-        awb: b.awb || boxAwb(order.lrn, b.boxNumber),
+        lineNumber: b.lineNumber,
+        quantity: b.quantity,
         description: b.description,
         referenceId: b.referenceId,
         weightKg: b.weightKg,
@@ -149,6 +167,42 @@ export function toShipmentDoc(order: Order & { boxes: Box[] }): ShipmentDoc {
         heightCm: b.heightCm,
       })),
   };
+}
+
+/** Total physical cartons across every manifest line. */
+export function totalBoxCount(boxes: DocBox[]): number {
+  return boxes.reduce((sum, b) => sum + b.quantity, 0);
+}
+
+/**
+ * Expand manifest lines into individual cartons for tag printing.
+ *
+ * Numbering runs continuously across the whole consignment — a 50-carton line
+ * gives boxes 1-50, the next line of 20 gives 51-70 — so every physical box has
+ * one unambiguous number matching the "BOX n / N" printed on its tag.
+ */
+export function expandBoxes(lrn: string, boxes: DocBox[]): PhysicalBox[] {
+  const out: PhysicalBox[] = [];
+  let index = 0;
+
+  for (const line of boxes) {
+    for (let i = 1; i <= line.quantity; i += 1) {
+      index += 1;
+      out.push({
+        index,
+        awb: boxAwb(lrn, index),
+        lineNumber: line.lineNumber,
+        indexInLine: i,
+        description: line.description,
+        referenceId: line.referenceId,
+        weightKg: line.weightKg,
+        lengthCm: line.lengthCm,
+        widthCm: line.widthCm,
+        heightCm: line.heightCm,
+      });
+    }
+  }
+  return out;
 }
 
 /** One line per distinct carton size, the way carriers print manifests. */
@@ -167,15 +221,15 @@ export function groupByDimension(boxes: DocBox[]): DimensionGroup[] {
     const key = `${b.lengthCm}x${b.widthCm}x${b.heightCm}`;
     const existing = map.get(key);
     if (existing) {
-      existing.count += 1;
-      existing.weightKg += b.weightKg;
+      existing.count += b.quantity;
+      existing.weightKg += b.weightKg * b.quantity;
     } else {
       map.set(key, {
-        count: 1,
+        count: b.quantity,
         lengthCm: b.lengthCm,
         widthCm: b.widthCm,
         heightCm: b.heightCm,
-        weightKg: b.weightKg,
+        weightKg: b.weightKg * b.quantity,
         label: key,
       });
     }

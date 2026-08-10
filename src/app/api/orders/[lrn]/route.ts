@@ -7,7 +7,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ lrn: string }>
     const order = await prisma.order.findUnique({
       where: { lrn },
       include: {
-        boxes: { orderBy: { boxNumber: "asc" } },
+        boxes: { orderBy: { lineNumber: "asc" } },
         events: { orderBy: { createdAt: "desc" } },
       },
     });

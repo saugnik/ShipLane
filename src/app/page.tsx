@@ -29,7 +29,6 @@ async function loadDashboard() {
     prisma.order.findMany({
       orderBy: { createdAt: "desc" },
       take: 8,
-      include: { _count: { select: { boxes: true } } },
     }),
     prisma.partner.count({ where: { active: true } }),
   ]);
@@ -159,7 +158,7 @@ export default async function DashboardPage() {
                         </td>
                         <td className="px-5 py-3 text-slate-700">{order.partnerName ?? "—"}</td>
                         <td className="tnum px-5 py-3 text-right text-slate-700">
-                          {order._count.boxes}
+                          {order.totalBoxes}
                         </td>
                         <td className="tnum px-5 py-3 text-right text-slate-700">
                           {formatKg(order.chargedWeight)}
