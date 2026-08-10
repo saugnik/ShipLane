@@ -1,9 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, MapPin, RotateCcw, ShieldCheck, TriangleAlert } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  MapPin,
+  PackageOpen,
+  RotateCcw,
+  ShieldCheck,
+  TriangleAlert,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { Field, Input } from "@/components/ui/Field";
 import { PartyForm } from "@/components/booking/PartyForm";
 import { StepCargo } from "@/components/booking/StepCargo";
 import { StepCarrier } from "@/components/booking/StepCarrier";
@@ -189,26 +198,57 @@ export function BookingWizard() {
             title="Pickup & drop"
             description="Search the address on the map, then drag the pin to the exact loading gate."
           />
-          <CardBody className="grid gap-8 lg:grid-cols-2">
-            <PartyForm
-              side="pickup"
-              value={state.pickup}
-              errors={errors}
-              onChange={(v) => {
-                patch("pickup", v);
-                clearErrorsFor("pickup.");
-              }}
-            />
-            <div className="border-t border-line pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
+          <CardBody className="flex flex-col gap-6">
+            {/* One consignment carries one commodity, so this sits above both
+                parties rather than being asked twice. */}
+            <div className="max-w-xl">
+              <Field
+                label="Product being shipped"
+                required
+                error={errors.product}
+                hint="The goods in this consignment — printed on the LR and the box tags."
+              >
+                {({ id, invalid, describedBy }) => (
+                  <div className="relative">
+                    <PackageOpen className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-4" />
+                    <Input
+                      id={id}
+                      invalid={invalid}
+                      aria-describedby={describedBy}
+                      className="pl-9"
+                      placeholder="e.g. Bamboo tableware"
+                      value={state.product}
+                      onChange={(e) => {
+                        patch("product", e.target.value);
+                        clearErrorsFor("product");
+                      }}
+                    />
+                  </div>
+                )}
+              </Field>
+            </div>
+
+            <div className="grid gap-8 border-t border-line pt-6 lg:grid-cols-2">
               <PartyForm
-                side="drop"
-                value={state.drop}
+                side="pickup"
+                value={state.pickup}
                 errors={errors}
                 onChange={(v) => {
-                  patch("drop", v);
-                  clearErrorsFor("drop.");
+                  patch("pickup", v);
+                  clearErrorsFor("pickup.");
                 }}
               />
+              <div className="border-t border-line pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
+                <PartyForm
+                  side="drop"
+                  value={state.drop}
+                  errors={errors}
+                  onChange={(v) => {
+                    patch("drop", v);
+                    clearErrorsFor("drop.");
+                  }}
+                />
+              </div>
             </div>
           </CardBody>
         </Card>

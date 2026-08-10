@@ -36,7 +36,6 @@ export const gstinSchema = z
 /** One end of the lane — used for both pickup and drop. */
 export const partySchema = z.object({
   company: required("Company name").max(120),
-  product: required("Product").max(120),
   contact: optionalText,
   email: z.union([z.literal(""), z.string().trim().email("Enter a valid email")]).optional(),
   phone: z.union([z.literal(""), phoneSchema]).optional(),
@@ -100,8 +99,12 @@ export const quoteRequestSchema = z.object({
 /** E-Way Bill threshold for movement of goods under the GST rules. */
 export const EWAY_BILL_THRESHOLD = 50_000;
 
+/** Shipment-level commodity — captured once, not per party. */
+export const productSchema = required("Product being shipped").max(120);
+
 export const createOrderSchema = z
   .object({
+    product: productSchema,
     pickup: partySchema,
     drop: partySchema,
     invoice: invoiceSchema,

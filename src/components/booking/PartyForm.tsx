@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Building2, PackageOpen } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { GST_STATE_CODES, INDIAN_STATES } from "@/lib/india";
@@ -23,7 +23,6 @@ const COPY = {
     companyLabel: "Shipper company name",
     contactLabel: "Pickup contact person",
     addressLabel: "Pickup address",
-    productLabel: "Product being shipped",
   },
   drop: {
     title: "Drop — consignee",
@@ -31,7 +30,6 @@ const COPY = {
     companyLabel: "Consignee company name",
     contactLabel: "Receiving contact person",
     addressLabel: "Delivery address",
-    productLabel: "Product being received",
   },
 } as const;
 
@@ -88,23 +86,6 @@ export function PartyForm({ side, value, onChange, errors }: Props) {
           )}
         </Field>
 
-        <Field label={copy.productLabel} required error={err("product")}>
-          {({ id, invalid, describedBy }) => (
-            <div className="relative">
-              <PackageOpen className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-4" />
-              <Input
-                id={id}
-                invalid={invalid}
-                aria-describedby={describedBy}
-                className="pl-9"
-                placeholder="e.g. Bamboo tableware"
-                value={value.product}
-                onChange={(e) => set("product", e.target.value)}
-              />
-            </div>
-          )}
-        </Field>
-
         <Field label={copy.contactLabel} error={err("contact")}>
           {({ id, invalid }) => (
             <Input
@@ -135,7 +116,7 @@ export function PartyForm({ side, value, onChange, errors }: Props) {
           )}
         </Field>
 
-        <Field label="Email" error={err("email")} className="sm:col-span-2">
+        <Field label="Email" error={err("email")}>
           {({ id, invalid }) => (
             <Input
               id={id}

@@ -3,6 +3,7 @@ import {
   boxSchema,
   invoiceSchema,
   partySchema,
+  productSchema,
   shipmentSchema,
   fieldErrors,
 } from "@/lib/validation";
@@ -17,7 +18,6 @@ import {
 
 export type PartyForm = {
   company: string;
-  product: string;
   contact: string;
   email: string;
   phone: string;
@@ -62,6 +62,8 @@ export type ShipmentForm = {
 };
 
 export type BookingState = {
+  /** The commodity, captured once — the same goods leave and arrive. */
+  product: string;
   pickup: PartyForm;
   drop: PartyForm;
   invoice: InvoiceForm;
@@ -72,7 +74,6 @@ export type BookingState = {
 
 export const emptyParty = (): PartyForm => ({
   company: "",
-  product: "",
   contact: "",
   email: "",
   phone: "",
@@ -95,6 +96,7 @@ export const emptyBox = (key: string): BoxForm => ({
 });
 
 export const initialBooking = (): BookingState => ({
+  product: "",
   pickup: emptyParty(),
   drop: emptyParty(),
   invoice: { invoiceNumber: "", invoiceAmount: "", ewayBill: "" },
@@ -127,7 +129,6 @@ export type StepId = (typeof STEPS)[number]["id"];
 export function toCreatePayload(state: BookingState) {
   const party = (p: PartyForm) => ({
     company: p.company,
-    product: p.product,
     contact: p.contact,
     email: p.email,
     phone: p.phone,
@@ -141,6 +142,7 @@ export function toCreatePayload(state: BookingState) {
   });
 
   return {
+    product: state.product,
     pickup: party(state.pickup),
     drop: party(state.drop),
     invoice: {
@@ -178,6 +180,10 @@ export function validateStep(step: StepId, state: BookingState): StepErrors {
   switch (step) {
     case "route": {
       const errors: StepErrors = {};
+
+      const product = productSchema.safeParse(payload.product);
+      if (!product.success) errors["product"] = product.error.issues[0].message;
+
       const pickup = partySchema.safeParse(payload.pickup);
       if (!pickup.success) {
         for (const [k, v] of Object.entries(fieldErrors(pickup.error))) errors[`pickup.${k}`] = v;

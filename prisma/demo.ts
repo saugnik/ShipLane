@@ -388,8 +388,9 @@ export async function seedDemoOrders(
         status: demo.status,
         createdAt: bookedAt,
 
+        product: demo.product,
+
         pickupCompany: demo.from.company,
-        pickupProduct: demo.product,
         pickupContact: demo.from.contact,
         pickupEmail: demo.from.email,
         pickupPhone: demo.from.phone,
@@ -400,7 +401,6 @@ export async function seedDemoOrders(
         pickupGstin: demo.from.gstin,
 
         dropCompany: demo.to.company,
-        dropProduct: demo.product,
         dropContact: demo.to.contact,
         dropEmail: demo.to.email,
         dropPhone: demo.to.phone,

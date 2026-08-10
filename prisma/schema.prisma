@@ -70,9 +70,13 @@ model Order {
 
   status String @default("BOOKED")
 
+  /// What is being shipped. One consignment carries one declared commodity, so
+  /// this is shipment-level — asking the shipper and the consignee separately
+  /// only created a way for the two to disagree.
+  product String
+
   // ---- Step 1: pickup (shipper) ----
   pickupCompany  String
-  pickupProduct  String
   pickupContact  String?
   pickupEmail    String?
   pickupPhone    String?
@@ -87,7 +91,6 @@ model Order {
 
   // ---- Step 1: drop (consignee) ----
   dropCompany String
-  dropProduct String
   dropContact String?
   dropEmail   String?
   dropPhone   String?

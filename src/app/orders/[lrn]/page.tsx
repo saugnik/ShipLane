@@ -97,7 +97,8 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
         <StatusBadge status={order.status} />
         <Badge tone="neutral">Docket {order.oid}</Badge>
         <Badge tone="neutral">MAWB {order.mawb}</Badge>
-        <Badge tone="brand">{order.partnerName ?? "Unassigned"}</Badge>
+        <Badge tone="brand">{order.product}</Badge>
+        <Badge tone="neutral">{order.partnerName ?? "Unassigned"}</Badge>
         <Badge tone="neutral">{MOT_LABEL[order.mot] ?? order.mot}</Badge>
         {order.ewayBill && <Badge tone="success">EWB {order.ewayBill}</Badge>}
       </div>
@@ -133,7 +134,6 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
                 state={order.pickupState}
                 pincode={order.pickupPincode}
                 gstin={order.pickupGstin}
-                product={order.pickupProduct}
               />
               <PartyBlock
                 title={`Delivery — ${DELIVERY_TYPE_LABEL[order.deliveryType] ?? order.deliveryType}`}
@@ -147,7 +147,6 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
                 state={order.dropState}
                 pincode={order.dropPincode}
                 gstin={order.dropGstin}
-                product={order.dropProduct}
               />
             </CardBody>
           </Card>
@@ -316,7 +315,6 @@ function PartyBlock({
   state,
   pincode,
   gstin,
-  product,
 }: {
   title: string;
   accent: string;
@@ -329,7 +327,6 @@ function PartyBlock({
   state: string;
   pincode: string;
   gstin: string | null;
-  product: string;
 }) {
   return (
     <div>
@@ -344,7 +341,6 @@ function PartyBlock({
         {city}, {state} — <span className="docnum">{pincode}</span>
       </p>
       <div className="mt-2 flex flex-wrap gap-1.5">
-        <Badge tone="brand">{product}</Badge>
         {phone && <Badge tone="neutral">{phone}</Badge>}
         {email && <Badge tone="neutral">{email}</Badge>}
         {gstin && <Badge tone="neutral">GSTIN {gstin}</Badge>}

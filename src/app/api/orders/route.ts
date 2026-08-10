@@ -73,8 +73,9 @@ export async function POST(req: Request) {
         mawb,
         status: "BOOKED",
 
+        product: input.product,
+
         pickupCompany: input.pickup.company,
-        pickupProduct: input.pickup.product,
         pickupContact: input.pickup.contact,
         pickupEmail: input.pickup.email || null,
         pickupPhone: input.pickup.phone || null,
@@ -87,7 +88,6 @@ export async function POST(req: Request) {
         pickupGstin: input.pickup.gstin || null,
 
         dropCompany: input.drop.company,
-        dropProduct: input.drop.product,
         dropContact: input.drop.contact,
         dropEmail: input.drop.email || null,
         dropPhone: input.drop.phone || null,

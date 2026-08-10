@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Boxes, MapPin, Pencil, ScrollText, Truck } from "lucide-react";
+import { Boxes, MapPin, Pencil, ScrollText, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader, DataRow } from "@/components/ui/Card";
 import type { BookingState, StepId } from "@/lib/bookingState";
@@ -37,9 +37,15 @@ export function StepReview({
             title="Route"
             action={<EditButton onClick={() => onEdit("route")} />}
           />
-          <CardBody className="grid gap-5 sm:grid-cols-2">
-            <PartySummary title="Pickup from" party={state.pickup} accent="bg-brand-600" />
-            <PartySummary title="Deliver to" party={state.drop} accent="bg-emerald-600" />
+          <CardBody className="flex flex-col gap-5">
+            <div className="flex items-center gap-2 rounded-lg bg-sunken px-3.5 py-2.5">
+              <span className="label-caps">Product</span>
+              <span className="text-[13px] font-semibold text-ink">{state.product || "—"}</span>
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <PartySummary title="Pickup from" party={state.pickup} accent="bg-brand-600" />
+              <PartySummary title="Deliver to" party={state.drop} accent="bg-emerald-600" />
+            </div>
           </CardBody>
         </Card>
 
@@ -231,9 +237,6 @@ function PartySummary({
       <div className="mt-2 flex flex-wrap gap-1.5">
         {party.phone && <Badge tone="neutral">{party.phone}</Badge>}
         {party.gstin && <Badge tone="neutral">GSTIN {party.gstin}</Badge>}
-        <Badge tone="brand">
-          {party.product || "—"} <ArrowRight className="size-3" />
-        </Badge>
       </div>
     </div>
   );
