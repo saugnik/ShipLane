@@ -1,4 +1,4 @@
-# Deploying ShipLane to Vercel + Neon
+# Deploying Shippbie to Vercel + Neon
 
 About 15 minutes end to end. Everything below has been verified against a real
 PostgreSQL 18 instance — the migration, the seed, the production build and PDF
@@ -9,7 +9,7 @@ generation in production mode all pass.
 ## 1 · Create the database (3 min)
 
 1. Sign up at **[neon.com](https://neon.com)** — the free tier is enough for a demo.
-2. Create a project. Name it `shiplane`, pick the region closest to your
+2. Create a project. Name it `shippbie`, pick the region closest to your
    audience (`AWS ap-south-1 / Mumbai` for India).
 3. Copy **both** connection strings from the dashboard. They differ only by
    `-pooler` in the hostname:
@@ -48,40 +48,25 @@ npm run db:seed
 npm run dev
 ```
 
-You should see the dashboard with 6 sample consignments across Delhi→Kolkata,
-Mumbai→Bengaluru, Ahmedabad→Chennai, Gurugram→Guwahati, Pune→Jaipur and
-Coimbatore→Hyderabad, in a mix of statuses from Booked through Delivered.
+Register at `/register` and you are in. `db:seed` loads the 5 carriers and
+their 395 rate lanes plus the admin account; add `SEED_MODE=carriers-only` to
+skip the sample consignments and start with an empty console.
 
 The same connection string will be used by Vercel, so there is only one to manage.
 
 ---
 
-## 3 · Push to GitHub (3 min)
+## 3 · Push to GitHub
 
-The `shiplane` folder is already a git repository. Create an **empty** repo on
-GitHub (no README, no .gitignore), then:
-
-```bash
-git add -A
-```
+The repo is already at **github.com/saugnik/ShipLane**. Vercel deploys from it,
+so shipping a change is just:
 
 ```bash
-git commit -m "ShipLane freight console"
+git add -A && git commit -m "your change" && git push
 ```
 
-```bash
-git branch -M main
-```
-
-```bash
-git remote add origin https://github.com/YOUR_USERNAME/shiplane.git
-```
-
-```bash
-git push -u origin main
-```
-
-`.env` is gitignored, so your database password does not leave your machine.
+`.env` is gitignored, so your database password and admin credentials never
+leave your machine.
 
 ---
 
@@ -99,6 +84,7 @@ git push -u origin main
    | `AUTH_SECRET` | 32+ random characters — signs the session cookie |
    | `ADMIN_EMAIL` | the single oversight account's address |
    | `ADMIN_PASSWORD` | 10+ characters; only used at seed time |
+   | `NEXT_PUBLIC_SITE_URL` | `https://shippbie.com` once the domain is live |
    | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | optional Maps key |
 
    `DIRECT_URL` is not optional. The build runs `prisma migrate deploy`, and
@@ -121,12 +107,59 @@ things Vercel would otherwise get wrong:
 - `build: prisma migrate deploy && next build` — applies any pending migrations
   to Neon before building.
 
-Your URL will be `https://shiplane-<something>.vercel.app`. Add a custom domain
-under **Settings → Domains** if you want something tidier for the demo.
+Your URL will be `https://shippbie-<something>.vercel.app`. Every push to `main`
+redeploys automatically from then on — no CLI needed.
 
 ---
 
-## 5 · Seed the deployed database
+## 5 · Point shippbie.com at it (GoDaddy)
+
+> **GitHub Pages cannot host this app.** Pages serves static files only, and
+> this app needs a server for the API routes, the database, sessions and PDF
+> generation. If a `CNAME` file reappears in the repo, or GitHub Pages is
+> enabled under the repo's Settings → Pages, turn it off — otherwise it will
+> compete for the domain.
+
+**In Vercel:** Settings → Domains → add `shippbie.com`. Vercel will show the
+exact DNS records to create. **Use the values it shows you** — the targets below
+are what you will typically see, but Vercel changes them and its screen is the
+authority.
+
+**In GoDaddy:** My Products → your domain → **DNS** → Manage Zones.
+
+| Type | Name | Value | TTL |
+| --- | --- | --- | --- |
+| `A` | `@` | the IP Vercel shows (commonly `76.76.21.21`) | 1 hour |
+| `CNAME` | `www` | the target Vercel shows (commonly `cname.vercel-dns.com`) | 1 hour |
+
+Three GoDaddy-specific things that trip people up:
+
+1. **Delete the parked A record first.** A new GoDaddy domain ships with an
+   `A @` record pointing at their parking page. Edit that record rather than
+   adding a second one — two `A @` records will round-robin and the site will
+   work only half the time.
+2. **Remove any existing `CNAME www`.** GoDaddy often pre-creates
+   `www → @`; replace it with the Vercel target.
+3. **Turn off Domain Forwarding** if it is on (Domain Settings → Forwarding).
+   It overrides DNS and will bounce visitors away from your app.
+
+Propagation is usually 10–30 minutes. Vercel issues the HTTPS certificate
+automatically once the records resolve; the domain shows "Valid Configuration"
+when it is done.
+
+**Finally**, set `NEXT_PUBLIC_SITE_URL` to `https://shippbie.com` in Vercel's
+environment variables and redeploy, so canonical URLs, link previews and the
+sitemap use the real domain instead of the `.vercel.app` one.
+
+### apex or www?
+
+Add both in Vercel and mark one as primary — Vercel redirects the other to it.
+Serving the same app on two hostnames without a redirect splits your SEO and
+means a session cookie set on one is not sent on the other.
+
+---
+
+## 6 · Seed the deployed database
 
 Step 2 already seeded Neon from your machine, and Vercel points at that same
 database — so the demo data is live.
@@ -154,7 +187,7 @@ built-in table. To turn on address autocomplete and the draggable map pin:
 1. In Google Cloud Console, enable **Maps JavaScript API**, **Places API (New)**
    and **Geocoding API**.
 2. Create an API key and restrict it by HTTP referrer to
-   `https://your-app.vercel.app/*`. The key is exposed to the browser by design,
+   `https://shippbie.com/*`. The key is exposed to the browser by design,
    so the referrer restriction is what actually protects it.
 3. Add it as `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` in Vercel → Settings →
    Environment Variables, then redeploy.
