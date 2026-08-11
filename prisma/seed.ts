@@ -363,7 +363,7 @@ async function main() {
     data: {
       email: DEMO_EMAIL,
       name: "Demo Operations",
-      company: "Amwoodo Eco Products Pvt Ltd",
+      company: "Anw Products Pvt Ltd",
       role: "USER",
       passwordHash: await hashSecret(demoPassword),
     },

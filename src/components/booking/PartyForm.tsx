@@ -78,7 +78,7 @@ export function PartyForm({ side, value, onChange, errors }: Props) {
                 invalid={invalid}
                 aria-describedby={describedBy}
                 className="pl-9"
-                placeholder="e.g. Amwoodo Eco Products Pvt Ltd"
+                placeholder="e.g. Anw Products Pvt Ltd"
                 value={value.company}
                 onChange={(e) => set("company", e.target.value)}
               />

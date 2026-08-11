@@ -147,7 +147,7 @@ export default async function LandingPage() {
             Trusted for time-critical freight by teams at
           </span>
           <div className="flex flex-wrap gap-x-8 gap-y-2">
-            {["Amwoodo Eco", "Sahyadri Components", "Sabarmati Textiles", "Kongu Pumps", "Nandi Electricals"].map(
+            {["Started working"].map(
               (n) => (
                 <span key={n} className="font-display text-[13px] font-bold text-ink">
                   {n}
