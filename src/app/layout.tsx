@@ -1,15 +1,30 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { IBM_Plex_Mono, Inter, Space_Grotesk } from "next/font/google";
 import { ThemeScript } from "@/components/ThemeToggle";
 import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
-const mono = JetBrains_Mono({ variable: "--font-mono-stack", subsets: ["latin"], display: "swap" });
+
+// Display face for headings — the strongest single brand cue.
+const display = Space_Grotesk({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  display: "swap",
+});
+
+// Document numbers, tracking ids and tags.
+const mono = IBM_Plex_Mono({
+  variable: "--font-mono-stack",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
-    default: `${BRAND.name} — B2B freight, booked in minutes`,
+    default: `${BRAND.name} — Global courier & freight`,
     template: `%s · ${BRAND.name}`,
   },
   description: BRAND.tagline,
@@ -24,10 +39,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Runs before paint so a dark-mode user never sees a white flash. */}
+        {/* Runs before paint so a dark-mode user never sees a light flash. */}
         <ThemeScript />
       </head>
-      <body className={`${inter.variable} ${mono.variable} antialiased`}>{children}</body>
+      <body className={`${inter.variable} ${display.variable} ${mono.variable} antialiased`}>
+        {children}
+      </body>
     </html>
   );
 }

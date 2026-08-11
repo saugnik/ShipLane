@@ -8,12 +8,15 @@ import { PDFFont, PDFPage, rgb, RGB } from "pdf-lib";
  * terms of boxes, labels and rows instead of coordinate arithmetic.
  */
 
-export const INK = rgb(0.07, 0.09, 0.13);
-export const MUTED = rgb(0.42, 0.45, 0.5);
-export const LINE = rgb(0.78, 0.8, 0.84);
-export const HAIRLINE = rgb(0.88, 0.9, 0.93);
-export const FILL = rgb(0.96, 0.97, 0.98);
-export const BRAND = rgb(0.03, 0.29, 0.61);
+// Brand palette, matching the app: navy ink, slate for secondary, orange for
+// the accents a warehouse eye should land on first.
+export const INK = rgb(0.043, 0.141, 0.278); // #0B2447 navy
+export const MUTED = rgb(0.357, 0.42, 0.51); // #5B6B82 slate
+export const LINE = rgb(0.8, 0.835, 0.878); // #CCD4E0
+export const HAIRLINE = rgb(0.886, 0.902, 0.929); // #E2E6ED
+export const FILL = rgb(0.961, 0.965, 0.973); // #F5F6F8 paper
+export const BRAND = rgb(0.043, 0.141, 0.278); // navy — headings and rules
+export const ACCENT = rgb(1, 0.353, 0.122); // #FF5A1F orange
 export const WHITE = rgb(1, 1, 1);
 
 export type Fonts = { regular: PDFFont; bold: PDFFont };

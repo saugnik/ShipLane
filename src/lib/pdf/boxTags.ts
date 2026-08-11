@@ -4,6 +4,7 @@ import { expandBoxes, formatAddress, partyName, type ShipmentDoc } from "@/lib/d
 import { documentTagId } from "@/lib/docNumbers";
 import { code128 } from "@/lib/pdf/barcode";
 import {
+  ACCENT,
   BRAND as BRAND_INK,
   Fonts,
   HAIRLINE,
@@ -123,11 +124,12 @@ function drawTag(page: PDFPage, fonts: Fonts, c: TagContent) {
   // Outer cut line
   rect(page, 3, 3, TAG_W - 6, TAG_H - 6, { border: HAIRLINE, borderWidth: 0.7 });
 
-  // Header bar
+  // Header bar — navy with an orange spine, matching the LR and the app.
   const headH = 16;
   const headY = TAG_H - 3 - headH;
   rect(page, 3, headY, TAG_W - 6, headH, { fill: BRAND_INK });
-  text(page, BRAND.name.toUpperCase(), PAD, headY + 5, {
+  rect(page, 3, headY, 4, headH, { fill: ACCENT });
+  text(page, BRAND.name.toUpperCase(), PAD + 3, headY + 5, {
     font: fonts.bold,
     size: 8.5,
     color: WHITE,

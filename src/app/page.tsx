@@ -1,268 +1,392 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  BadgeIndianRupee,
-  Boxes,
-  FileText,
-  MapPin,
-  Radar,
-  ShieldCheck,
-  Sparkles,
-  Tags,
-  Truck,
-  Zap,
-} from "lucide-react";
+import { ChevronsRight, Globe, Package, Truck } from "lucide-react";
 import { ButtonLink } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
+import { LogoWord } from "@/components/Logo";
 import { PublicHeader } from "@/components/marketing/PublicHeader";
+import { RoutePanel } from "@/components/marketing/RoutePanel";
+import { TrackBox } from "@/components/marketing/TrackBox";
 import { currentSession } from "@/lib/auth/session";
-import { BRAND, LR_TERMS } from "@/lib/brand";
+import { BRAND } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
-const STEPS = [
-  { icon: MapPin, title: "Pick the lane", body: "Search pickup and drop on the map, or let the PIN code fill in city and state." },
-  { icon: Boxes, title: "Declare the cargo", body: "One row per carton size with a quantity — 200 identical boxes is one line, not 200." },
-  { icon: BadgeIndianRupee, title: "Compare carriers", body: "Every carrier on your panel priced on the same consignment, with the full charge breakup." },
-  { icon: FileText, title: "Print and hand over", body: "A three-copy Lorry Receipt and a scannable tag for every carton, generated instantly." },
+const SERVICES = [
+  {
+    icon: ChevronsRight,
+    title: "Express",
+    body: "Priority air routing for documents and urgent parcels that cannot wait on a standard lane.",
+    eta: "1–2 business days",
+  },
+  {
+    icon: Package,
+    title: "Standard parcel",
+    body: "Reliable surface and air-surface shipping for everyday domestic and cross-border parcels.",
+    eta: "3–6 business days",
+  },
+  {
+    icon: Truck,
+    title: "Freight & cargo",
+    body: "Palletised and part-truckload freight by road, rail or air, with the LR and e-way bill handled.",
+    eta: "Custom timeline",
+  },
+  {
+    icon: Globe,
+    title: "International",
+    body: "Customs brokerage, duties calculation and compliance built into every cross-border label.",
+    eta: "Door to door",
+  },
 ];
 
-const FEATURES = [
+const STEPS = [
   {
-    icon: BadgeIndianRupee,
-    title: "Rate shopping that adds up",
-    body: "Contracted lane rates with the most specific match winning. Freight, docket, fuel, FOV, ODA, COD and GST are all itemised — and the price is frozen onto the LR so the invoice can never disagree.",
+    tag: "PICKUP",
+    title: "Scheduled collection",
+    body: "A driver collects from your dock within the window you choose — no waiting around all day.",
   },
   {
-    icon: Tags,
-    title: "Documents, not paperwork",
-    body: "Lorry Receipt in shipper, POD and recipient copies, plus one 4×2in thermal tag per carton with its own Code128 barcode. Numbered continuously so every box has one unambiguous identity.",
+    tag: "TRANSIT",
+    title: "Hub sorting & checkposts",
+    body: "Your consignment clears checkposts and transfers hubs automatically; tracking updates at every scan.",
   },
   {
-    icon: ShieldCheck,
-    title: "Compliance built in",
-    body: "E-Way Bill is enforced above ₹50,000 rather than failing at a check post. GSTIN format and its state code are validated against the address as you type.",
+    tag: "DELIVERY",
+    title: "Final mile handoff",
+    body: "Delivered against a signed POD, or redirected to a pickup point on request.",
+  },
+];
+
+const RATES = [
+  {
+    name: "Standard",
+    price: "₹14",
+    unit: "/ kg, surface",
+    sub: "Best for regular domestic and regional freight.",
+    points: ["3–6 working day delivery", "Scan-level tracking", "Owner-risk carriage"],
+    cta: "Get a quote",
+    featured: false,
   },
   {
-    icon: Radar,
-    title: "Tracking anyone can use",
-    body: "A public LRN lookup that shows movement and nothing else — no pricing, no contact details, no invoice values leak to whoever holds the number.",
+    name: "Express",
+    price: "₹29",
+    unit: "/ kg, air",
+    sub: "For time-critical consignments crossing states.",
+    points: [
+      "1–2 working day delivery",
+      "Live scan-by-scan tracking",
+      "Full carrier-risk cover (FOV)",
+      "Priority checkpost clearance",
+    ],
+    cta: "Get a quote",
+    featured: true,
+  },
+  {
+    name: "Freight",
+    price: "Custom",
+    unit: "/ pallet or FTL",
+    sub: "For bulk, palletised or recurring lanes.",
+    points: ["Dedicated freight coordinator", "Road, rail or air routing", "Contracted lane rate cards"],
+    cta: "Talk to sales",
+    featured: false,
   },
 ];
 
 export default async function LandingPage() {
   const session = await currentSession();
+  const startHref = session ? "/dashboard" : "/register";
 
   return (
     <div className="min-h-dvh bg-canvas">
       <PublicHeader signedIn={Boolean(session)} />
 
       {/* ------------------------------------------------------------ hero */}
-      <section className="relative overflow-hidden border-b border-line">
-        <div className="grid-paper pointer-events-none absolute inset-0 opacity-70" aria-hidden />
-        <div
-          className="pointer-events-none absolute -top-40 left-1/2 size-[680px] -translate-x-1/2 rounded-full opacity-25 blur-3xl"
-          style={{ background: "radial-gradient(circle, var(--color-brand-500), transparent 65%)" }}
-          aria-hidden
-        />
+      <section className="pt-16 pb-14 sm:pt-24">
+        <div className="mx-auto grid max-w-[1180px] items-center gap-14 px-5 sm:px-8 lg:grid-cols-[1.05fr_0.95fr]">
+          <div>
+            <span className="eyebrow mb-5">Nationwide freight network</span>
+            <h1 className="text-[clamp(38px,4.6vw,62px)] leading-[1.04] text-ink">
+              Delivery that moves at{" "}
+              {/* brand-600, not 500 — the raw brand orange misses 3:1 even at
+                  display size on the paper canvas. */}
+              <em className="text-brand-600 not-italic dark:text-brand-400">
+                the speed of business.
+              </em>
+            </h1>
+            <p className="mt-5 max-w-[480px] text-[17.5px] leading-relaxed text-ink-3">
+              {BRAND.name} rates every carrier on your panel, enforces the paperwork, and prints the
+              Lorry Receipt and carton tags before the vehicle reaches your dock.
+            </p>
 
-        <div className="relative mx-auto max-w-6xl px-4 py-20 text-center sm:px-6 lg:py-28">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-[11px] font-semibold text-ink-2 shadow-xs">
-            <Sparkles className="size-3 text-brand-500" />
-            Built for B2B part-truckload freight
-          </span>
+            <div className="mt-8 max-w-[480px]">
+              <TrackBox />
+            </div>
 
-          <h1 className="mx-auto mt-6 max-w-3xl text-4xl leading-[1.08] font-bold tracking-[-0.035em] text-ink sm:text-5xl lg:text-6xl">
-            Book freight, compare carriers and print the LR
-            <span className="text-brand-600 dark:text-brand-400"> in one pass</span>
-          </h1>
-
-          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-ink-2">
-            Capture the lane, the paperwork and the cartons once. {BRAND.name} rates it across your
-            entire carrier panel and generates every document the driver needs — before the vehicle
-            reaches your dock.
-          </p>
-
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <ButtonLink href={session ? "/dashboard" : "/register"} size="lg">
-              {session ? "Open the console" : "Create your account"}
-              <ArrowRight className="size-4" />
-            </ButtonLink>
-            <ButtonLink href="/track" variant="secondary" size="lg">
-              <Radar className="size-4" />
-              Track a shipment
-            </ButtonLink>
+            <dl className="mt-7 flex flex-wrap gap-x-9 gap-y-4">
+              {[
+                ["19,000+", "PIN codes served"],
+                ["5", "Carriers rated per booking"],
+                ["99.2%", "On-time rate"],
+              ].map(([num, lab]) => (
+                <div key={lab}>
+                  <dt className="font-display text-[22px] font-bold text-ink">{num}</dt>
+                  <dd className="mt-0.5 text-[12.5px] text-ink-3">{lab}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
 
-          <p className="mt-4 text-xs text-ink-3">
-            Sign in with a one-time code — no password to remember or leak.
-          </p>
+          <div className="order-first lg:order-none">
+            <RoutePanel />
+          </div>
+        </div>
+      </section>
 
-          {/* Proof strip */}
-          <dl className="mx-auto mt-14 grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-card)] border border-line bg-line shadow-sm sm:grid-cols-4">
-            {[
-              ["5", "carriers rated per booking"],
-              ["3", "LR copies generated"],
-              ["1 tag", "per physical carton"],
-              ["₹50k", "E-Way Bill threshold enforced"],
-            ].map(([value, label]) => (
-              <div key={label} className="bg-surface px-4 py-5">
-                <dt className="tnum text-xl font-bold tracking-[-0.02em] text-ink">{value}</dt>
-                <dd className="mt-1 text-[11px] leading-snug text-ink-3">{label}</dd>
+      {/* ------------------------------------------------------------ trust */}
+      <div className="border-y border-line bg-surface">
+        <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-5 px-5 py-[22px] sm:px-8">
+          <span className="text-[13px] font-medium text-ink-3">
+            Trusted for time-critical freight by teams at
+          </span>
+          <div className="flex flex-wrap gap-x-8 gap-y-2">
+            {["Amwoodo Eco", "Sahyadri Components", "Sabarmati Textiles", "Kongu Pumps", "Nandi Electricals"].map(
+              (n) => (
+                <span key={n} className="font-display text-[13px] font-bold text-ink">
+                  {n}
+                </span>
+              ),
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------ services */}
+      <section id="services" className="scroll-mt-24 py-24">
+        <div className="mx-auto max-w-[1180px] px-5 sm:px-8">
+          <div className="mb-14 max-w-[600px]">
+            <span className="eyebrow mb-3.5">What we move</span>
+            <h2 className="text-[clamp(28px,3vw,38px)] leading-[1.12] text-ink">
+              One network, four ways to ship.
+            </h2>
+            <p className="mt-3.5 text-[16px] leading-relaxed text-ink-3">
+              Pick a speed and let the network handle checkposts, transfers and last mile — or mix
+              services on a single consignment as it crosses states.
+            </p>
+          </div>
+
+          {/* 1px gaps over a line-coloured bed give the hairline-grid look. */}
+          <div className="grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-2 xl:grid-cols-4">
+            {SERVICES.map((s) => (
+              <div key={s.title} className="bg-surface p-8 transition-colors hover:bg-sunken">
+                <span className="grid size-[46px] place-items-center rounded-[10px] bg-canvas">
+                  <s.icon className="size-[22px] text-brand-500" />
+                </span>
+                <h3 className="mt-5 text-[18px] text-ink">{s.title}</h3>
+                <p className="mt-2.5 text-[14.5px] leading-[1.55] text-ink-3">{s.body}</p>
+                <span className="docnum mt-3.5 block text-[12.5px] font-medium text-brand-700 dark:text-brand-400">
+                  {s.eta}
+                </span>
               </div>
             ))}
-          </dl>
+          </div>
         </div>
       </section>
 
       {/* ------------------------------------------------------------ how */}
-      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <div className="text-center">
-          <p className="label-caps">How it works</p>
-          <h2 className="mt-2 text-2xl font-bold tracking-[-0.025em] text-ink sm:text-3xl">
-            Four steps from enquiry to handover
-          </h2>
-        </div>
+      <section id="how" className="scroll-mt-24 pb-24">
+        <div className="mx-auto max-w-[1180px] px-5 sm:px-8">
+          <div className="panel-navy relative overflow-hidden rounded-[24px] px-7 py-14 sm:px-14">
+            <div className="mb-2 max-w-[600px]">
+              <span className="eyebrow mb-3.5">The route</span>
+              <h2 className="text-[clamp(28px,3vw,38px)] leading-[1.12] text-panel-ink">
+                Pickup to delivery, without a black box.
+              </h2>
+              <p className="mt-3.5 text-[16px] leading-relaxed text-panel-ink-2">
+                Every consignment moves through the same three checkpoints — you can see exactly
+                which one it is at, in real time.
+              </p>
+            </div>
 
-        <ol className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((step, i) => (
-            <li
-              key={step.title}
-              className="relative rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-sm"
-            >
-              <span className="grid size-10 place-items-center rounded-[11px] bg-brand-500/10 text-brand-600 ring-1 ring-inset ring-brand-500/15 dark:text-brand-300">
-                <step.icon className="size-5" />
-              </span>
-              <span className="tnum absolute top-5 right-5 text-xs font-bold text-ink-4">
-                0{i + 1}
-              </span>
-              <h3 className="mt-4 text-sm font-semibold text-ink">{step.title}</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-ink-3">{step.body}</p>
-            </li>
-          ))}
-        </ol>
+            {/* Progress rail with a node per stage. */}
+            <div className="relative my-12 h-0.5 bg-white/14">
+              {[0, 50, 100].map((left) => (
+                <span
+                  key={left}
+                  className="absolute top-1/2 size-[9px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500"
+                  style={{ left: `${left}%` }}
+                />
+              ))}
+            </div>
+
+            <ol className="grid gap-8 md:grid-cols-3">
+              {STEPS.map((s) => (
+                <li key={s.tag} className="pr-6">
+                  <span className="docnum mb-3.5 block text-[12px] font-medium tracking-wider text-brand-500">
+                    {s.tag}
+                  </span>
+                  <h3 className="text-[19px] text-panel-ink">{s.title}</h3>
+                  <p className="mt-2.5 text-[14.5px] leading-relaxed text-panel-ink-2">{s.body}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
       </section>
 
-      {/* ------------------------------------------------------------ features */}
-      <section className="border-y border-line bg-sunken">
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-          <div className="max-w-2xl">
-            <p className="label-caps">What you get</p>
-            <h2 className="mt-2 text-2xl font-bold tracking-[-0.025em] text-ink sm:text-3xl">
-              The parts of freight that usually go wrong
+      {/* ------------------------------------------------------------ rates */}
+      <section id="rates" className="scroll-mt-24 pb-24">
+        <div className="mx-auto max-w-[1180px] px-5 sm:px-8">
+          <div className="mb-14 max-w-[600px]">
+            <span className="eyebrow mb-3.5">Pricing</span>
+            <h2 className="text-[clamp(28px,3vw,38px)] leading-[1.12] text-ink">
+              Straightforward rates, no checkpost surprises.
             </h2>
-            <p className="mt-3 text-sm leading-relaxed text-ink-2">
-              Wrong weights, missing e-way bills, boxes nobody can identify at a transshipment hub.
-              Each one is a design decision here, not an afterthought.
+            <p className="mt-3.5 text-[16px] leading-relaxed text-ink-3">
+              Every quote itemises freight, docket, fuel, FOV, ODA and GST upfront — and the figure
+              you accept is frozen onto the Lorry Receipt.
             </p>
           </div>
 
-          <div className="mt-12 grid gap-4 md:grid-cols-2">
-            {FEATURES.map((f) => (
+          <div className="grid gap-6 lg:grid-cols-3">
+            {RATES.map((r) => (
               <div
-                key={f.title}
-                className="rounded-[var(--radius-card)] border border-line bg-surface p-6 shadow-sm"
+                key={r.name}
+                className={
+                  r.featured
+                    ? "relative flex flex-col rounded-[16px] border border-brand-500 bg-surface p-8 shadow-lg shadow-brand-500/15"
+                    : "relative flex flex-col rounded-[16px] border border-line bg-surface p-8"
+                }
               >
-                <span className="grid size-10 place-items-center rounded-[11px] bg-brand-500/10 text-brand-600 ring-1 ring-inset ring-brand-500/15 dark:text-brand-300">
-                  <f.icon className="size-5" />
-                </span>
-                <h3 className="mt-4 text-[15px] font-semibold text-ink">{f.title}</h3>
-                <p className="mt-2 text-[13px] leading-relaxed text-ink-2">{f.body}</p>
+                {r.featured && (
+                  <span className="absolute -top-[11px] left-7 rounded-[5px] bg-brand-600 px-2.5 py-1 text-[10.5px] font-bold tracking-[0.06em] text-white">
+                    MOST BOOKED
+                  </span>
+                )}
+                <span className="label-caps">{r.name}</span>
+                <p className="font-display mt-3 text-[34px] leading-none font-bold text-ink">
+                  {r.price}
+                  <span className="ml-1 font-sans text-[14px] font-medium text-ink-3">{r.unit}</span>
+                </p>
+                <p className="mt-2 text-[13.5px] text-ink-3">{r.sub}</p>
+
+                <ul className="mt-6 mb-7 flex-1">
+                  {r.points.map((p) => (
+                    <li
+                      key={p}
+                      className="flex items-start gap-2.5 border-t border-line py-2.5 text-[14px] text-ink-2 first:border-t-0"
+                    >
+                      <span className="text-brand-600 dark:text-brand-400" aria-hidden>
+                        —
+                      </span>
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+
+                <ButtonLink
+                  href={startHref}
+                  variant={r.featured ? "primary" : "secondary"}
+                  className="w-full"
+                >
+                  {r.cta}
+                </ButtonLink>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ------------------------------------------------------------ roles */}
-      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <div className="grid items-center gap-10 lg:grid-cols-2">
-          <div>
-            <p className="label-caps">Access</p>
-            <h2 className="mt-2 text-2xl font-bold tracking-[-0.025em] text-ink sm:text-3xl">
-              Your team books. Oversight only watches.
+      {/* ------------------------------------------------------------ cta */}
+      <section className="pb-24">
+        <div className="mx-auto max-w-[1180px] px-5 sm:px-8">
+          {/* Navy on orange rather than white on orange: white body text over
+              #FF5A1F is only 3.1:1, navy is 5.1:1 — and it reads as a
+              deliberate brand pairing rather than a washed-out overlay. */}
+          <div className="flex flex-col items-center gap-5 rounded-[20px] bg-brand-500 px-7 py-14 text-center sm:px-14">
+            <h2 className="max-w-[640px] text-[clamp(26px,3vw,36px)] text-navy-800">
+              Ready to send your first consignment?
             </h2>
-            <p className="mt-3 text-sm leading-relaxed text-ink-2">
-              Accounts create and manage their own consignments and never see anyone else&apos;s.
-              Nothing on the platform can be deleted — a booked consignment is a commercial record,
-              so it is superseded, never erased.
+            <p className="max-w-[480px] text-[15.5px] leading-relaxed text-navy-800">
+              Create an account and get a live rate across every carrier on the panel in under a
+              minute.
             </p>
-            <div className="mt-6 flex flex-wrap gap-2">
-              <Badge tone="brand">
-                <Zap className="size-3" /> One-time code sign-in
-              </Badge>
-              <Badge tone="neutral">Scoped to your own bookings</Badge>
-              <Badge tone="success">Immutable records</Badge>
+            <div className="mt-1.5 flex flex-wrap justify-center gap-3.5">
+              <Link
+                href={startHref}
+                className="rounded-[8px] bg-navy-800 px-6 py-3.5 text-[14.5px] font-bold text-white transition-transform active:scale-[0.98]"
+              >
+                {session ? "Open the console" : "Create free account"}
+              </Link>
+              <Link
+                href="/track"
+                className="rounded-[8px] border-[1.5px] border-navy-800 px-6 py-3.5 text-[14.5px] font-semibold text-navy-800 transition-colors hover:bg-navy-800/10"
+              >
+                Track a shipment
+              </Link>
             </div>
-          </div>
-
-          <div className="rounded-[var(--radius-card)] border border-line bg-surface p-6 shadow-md">
-            <div className="flex items-center gap-2.5 border-b border-line pb-4">
-              <span className="grid size-9 place-items-center rounded-[10px] bg-brand-600 text-white">
-                <Truck className="size-4" />
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-ink">Ready in under a minute</p>
-                <p className="text-xs text-ink-3">Email, a code, and you are in.</p>
-              </div>
-            </div>
-            <ul className="mt-4 flex flex-col gap-3">
-              {[
-                "No password to set, forget or have stolen",
-                "Your consignments stay private to your account",
-                "Documents download the moment a booking is confirmed",
-              ].map((line) => (
-                <li key={line} className="flex items-start gap-2.5 text-[13px] text-ink-2">
-                  <ShieldCheck className="mt-px size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                  {line}
-                </li>
-              ))}
-            </ul>
-            <ButtonLink href={session ? "/dashboard" : "/register"} className="mt-6 w-full">
-              {session ? "Open the console" : "Get started free"}
-              <ArrowRight className="size-4" />
-            </ButtonLink>
           </div>
         </div>
       </section>
 
       {/* ------------------------------------------------------------ footer */}
-      <footer className="border-t border-line bg-surface">
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-          <div className="flex flex-wrap items-start justify-between gap-6">
-            <div className="max-w-sm">
-              <div className="flex items-center gap-2.5">
-                <span className="grid size-8 place-items-center rounded-[10px] bg-brand-600 text-white">
-                  <Truck className="size-4" />
-                </span>
-                <span className="text-sm font-bold tracking-[-0.02em] text-ink">{BRAND.name}</span>
-              </div>
-              <p className="mt-3 text-xs leading-relaxed text-ink-3">{BRAND.legalName}</p>
-              <p className="mt-1 text-xs leading-relaxed text-ink-4">{BRAND.registeredOffice}</p>
+      <footer id="contact" className="panel-navy pt-16 pb-8">
+        <div className="mx-auto max-w-[1180px] px-5 sm:px-8">
+          <div className="grid gap-10 border-b border-white/10 pb-11 md:grid-cols-2 xl:grid-cols-[1.4fr_repeat(3,1fr)]">
+            <div>
+              <LogoWord className="text-panel-ink" />
+              <p className="mt-3.5 max-w-[260px] text-[14px] leading-relaxed text-panel-ink-3">
+                Courier and freight network moving parcels, pallets and cargo across 19,000+ PIN
+                codes with live tracking end to end.
+              </p>
             </div>
 
-            <div className="flex gap-10 text-xs">
-              <div>
-                <p className="label-caps mb-2">Product</p>
-                <ul className="flex flex-col gap-1.5 text-ink-2">
-                  <li><Link href="/register" className="hover:text-ink">Create account</Link></li>
-                  <li><Link href="/login" className="hover:text-ink">Sign in</Link></li>
-                  <li><Link href="/track" className="hover:text-ink">Track a shipment</Link></li>
-                </ul>
+            {[
+              {
+                head: "Product",
+                links: [
+                  ["Create account", "/register"],
+                  ["Sign in", "/login"],
+                  ["Track a shipment", "/track"],
+                ],
+              },
+              {
+                head: "Services",
+                links: [
+                  ["Express", "/#services"],
+                  ["Standard parcel", "/#services"],
+                  ["Freight & cargo", "/#services"],
+                ],
+              },
+              {
+                head: "Support",
+                links: [
+                  [BRAND.supportPhone, `tel:${BRAND.supportPhone.replace(/\s/g, "")}`],
+                  [BRAND.supportEmail, `mailto:${BRAND.supportEmail}`],
+                  ["How it works", "/#how"],
+                ],
+              },
+            ].map((col) => (
+              <div key={col.head}>
+                <h4 className="mb-4 text-[13px] tracking-[0.06em] text-panel-ink uppercase">
+                  {col.head}
+                </h4>
+                {col.links.map(([label, href]) => (
+                  <Link
+                    key={label}
+                    href={href}
+                    className="block py-1.5 text-[14px] break-all text-panel-ink-2 transition-colors hover:text-brand-500"
+                  >
+                    {label}
+                  </Link>
+                ))}
               </div>
-              <div>
-                <p className="label-caps mb-2">Contact</p>
-                <ul className="flex flex-col gap-1.5 text-ink-2">
-                  <li>{BRAND.supportPhone}</li>
-                  <li className="break-all">{BRAND.supportEmail}</li>
-                </ul>
-              </div>
-            </div>
+            ))}
           </div>
 
-          <p className="mt-8 border-t border-line pt-6 text-[11px] leading-relaxed text-ink-4">
-            {LR_TERMS}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-6 text-[13px] text-panel-ink-3">
+            <span>© 2026 {BRAND.legalName}. All rights reserved.</span>
+            <span>
+              CIN {BRAND.cin} · Transporter ID {BRAND.transporterId}
+            </span>
+          </div>
         </div>
       </footer>
     </div>

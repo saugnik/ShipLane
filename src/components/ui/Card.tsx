@@ -45,12 +45,12 @@ export function CardHeader({
     >
       <div className="flex min-w-0 items-start gap-3">
         {Icon && (
-          <span className="mt-px grid size-8 shrink-0 place-items-center rounded-[10px] bg-brand-500/10 text-brand-600 ring-1 ring-inset ring-brand-500/15 dark:text-brand-300">
-            <Icon className="size-4" />
+          <span className="mt-px grid size-9 shrink-0 place-items-center rounded-[9px] bg-inset text-brand-600 ring-1 ring-inset ring-line dark:text-brand-400">
+            <Icon className="size-4.5" />
           </span>
         )}
         <div className="min-w-0">
-          <h2 className="text-sm leading-5 font-semibold tracking-[-0.01em] text-ink">{title}</h2>
+          <h2 className="font-display text-[15px] leading-5 font-bold text-ink">{title}</h2>
           {description && <p className="mt-1 text-xs leading-relaxed text-ink-3">{description}</p>}
         </div>
       </div>
@@ -128,10 +128,10 @@ export function EmptyState({
   return (
     <div className="relative flex flex-col items-center overflow-hidden rounded-[var(--radius-card)] border border-dashed border-line-strong px-6 py-16 text-center">
       <div className="grid-paper pointer-events-none absolute inset-0" aria-hidden />
-      <span className="relative grid size-14 place-items-center rounded-2xl bg-surface text-ink-3 shadow-md ring-1 ring-line">
+      <span className="relative grid size-14 place-items-center rounded-2xl bg-surface text-brand-600 shadow-md ring-1 ring-line dark:text-brand-400">
         <Icon className="size-6" />
       </span>
-      <h3 className="relative mt-5 text-sm font-semibold text-ink">{title}</h3>
+      <h3 className="font-display relative mt-5 text-[15px] font-bold text-ink">{title}</h3>
       <p className="relative mt-1.5 max-w-sm text-xs leading-relaxed text-ink-3">{description}</p>
       {action && <div className="relative mt-6">{action}</div>}
     </div>

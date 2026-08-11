@@ -4,38 +4,43 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "outline";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "outline" | "navy";
 type Size = "sm" | "md" | "lg";
 
 const VARIANTS: Record<Variant, string> = {
-  // The inset highlight gives the filled button a slight lift without a gradient.
+  // Fill is brand-600, not the raw brand-500: white on #FF5A1F is only 3.06:1
+  // and fails AA at button text sizes. 600 keeps the orange and reaches 4.7:1.
   primary:
-    "bg-brand-600 text-white shadow-sm shadow-brand-600/25 ring-1 ring-inset ring-white/10 " +
+    "bg-brand-600 text-white shadow-sm shadow-brand-600/25 " +
     "hover:bg-brand-500 active:bg-brand-700 disabled:bg-brand-600/40 disabled:shadow-none",
+  // Navy is for secondary emphasis — the "Ship now" treatment.
+  navy:
+    "bg-panel text-panel-ink shadow-sm hover:bg-brand-600 hover:text-white " +
+    "active:bg-brand-700 disabled:opacity-50",
   secondary:
     "bg-surface text-ink ring-1 ring-inset ring-line-strong shadow-xs " +
     "hover:bg-sunken active:bg-inset disabled:text-ink-4",
   outline:
-    "bg-transparent text-brand-600 ring-1 ring-inset ring-brand-500/35 " +
-    "hover:bg-brand-500/8 active:bg-brand-500/14 disabled:text-brand-500/40 dark:text-brand-300",
+    "bg-transparent text-brand-700 ring-1 ring-inset ring-brand-500/40 " +
+    "hover:bg-brand-500/8 active:bg-brand-500/14 disabled:text-brand-500/40 dark:text-brand-400",
   ghost:
     "bg-transparent text-ink-2 hover:bg-inset hover:text-ink active:bg-line-soft disabled:text-ink-4",
   danger:
-    "bg-rose-600 text-white shadow-sm shadow-rose-600/25 ring-1 ring-inset ring-white/10 " +
+    "bg-rose-600 text-white shadow-sm shadow-rose-600/25 " +
     "hover:bg-rose-500 active:bg-rose-700 disabled:bg-rose-600/40",
 };
 
 const SIZES: Record<Size, string> = {
-  sm: "h-8 px-3 text-xs gap-1.5 rounded-lg",
-  md: "h-9.5 px-4 text-[13px] gap-2 rounded-[10px]",
-  lg: "h-11 px-5 text-sm gap-2 rounded-xl",
+  sm: "h-8 px-3.5 text-xs gap-1.5 rounded-[7px]",
+  md: "h-10 px-5 text-[14px] gap-2 rounded-[8px]",
+  lg: "h-12 px-6 text-[15px] gap-2 rounded-[9px]",
 };
 
 const base =
   "relative inline-flex items-center justify-center font-semibold select-none " +
   "transition-[background-color,box-shadow,transform,color] duration-150 active:scale-[0.985] " +
   "disabled:cursor-not-allowed disabled:active:scale-100 " +
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500";
+  "focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand-500";
 
 type CommonProps = {
   variant?: Variant;
@@ -96,7 +101,7 @@ export function IconButton({
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const tones = {
     neutral: "text-ink-3 hover:bg-inset hover:text-ink",
-    brand: "text-ink-3 hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-300",
+    brand: "text-ink-3 hover:bg-brand-500/12 hover:text-brand-700 dark:hover:text-brand-400",
     danger: "text-ink-3 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400",
   } as const;
 
@@ -105,7 +110,7 @@ export function IconButton({
       type="button"
       title={label}
       className={cn(
-        "grid size-8 place-items-center rounded-lg transition-colors disabled:opacity-40 disabled:hover:bg-transparent",
+        "grid size-8 place-items-center rounded-[7px] transition-colors disabled:opacity-40 disabled:hover:bg-transparent",
         tones[tone],
         className,
       )}

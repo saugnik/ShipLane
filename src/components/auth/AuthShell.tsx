@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Truck } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BRAND } from "@/lib/brand";
 
@@ -14,12 +14,9 @@ export function AuthShell({ children, aside }: { children: React.ReactNode; asid
         aria-hidden
       />
 
-      <header className="relative flex h-16 items-center px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="grid size-9 place-items-center rounded-[11px] bg-brand-600 text-white shadow-sm shadow-brand-600/30 ring-1 ring-inset ring-white/15">
-            <Truck className="size-4.5" />
-          </span>
-          <span className="text-[15px] font-bold tracking-[-0.02em] text-ink">{BRAND.name}</span>
+      <header className="relative flex h-[76px] items-center px-5 sm:px-8">
+        <Link href="/" aria-label="Home">
+          <Logo />
         </Link>
         <div className="ml-auto">
           <ThemeToggle />

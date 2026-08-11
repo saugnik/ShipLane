@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/Logo";
 import { ButtonLink } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserMenu } from "@/components/UserMenu";
@@ -93,19 +94,9 @@ export function AppShell({
           open ? "translate-x-0 shadow-lg" : "-translate-x-full",
         )}
       >
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-line px-5">
-          <Link href={isAdmin ? "/admin" : "/dashboard"} className="group flex items-center gap-2.5">
-            <span className="relative grid size-9 place-items-center rounded-[11px] bg-brand-600 text-white shadow-sm shadow-brand-600/30 ring-1 ring-inset ring-white/15">
-              <Truck className="size-4.5" />
-            </span>
-            <span className="leading-tight">
-              <span className="block text-[15px] font-bold tracking-[-0.02em] text-ink">
-                {BRAND.name}
-              </span>
-              <span className="block text-[10px] font-semibold tracking-[0.08em] text-ink-4 uppercase">
-                {isAdmin ? "Oversight" : "Freight console"}
-              </span>
-            </span>
+        <div className="flex h-[76px] shrink-0 items-center justify-between border-b border-line px-5">
+          <Link href={isAdmin ? "/admin" : "/dashboard"} aria-label="Home">
+            <Logo size={36} sub={isAdmin ? "Oversight" : "Freight console"} />
           </Link>
           <button
             type="button"
@@ -130,16 +121,16 @@ export function AppShell({
                       href={href}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "group relative flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-[13px] font-medium transition-colors",
+                        "group relative flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 text-[13.5px] font-medium transition-colors",
                         active
-                          ? "bg-brand-500/10 text-brand-700 dark:text-brand-300"
+                          ? "bg-brand-500/12 text-brand-700 dark:text-brand-400"
                           : "text-ink-2 hover:bg-inset hover:text-ink",
                       )}
                     >
                       {/* Accent rail marks the active route without a heavy fill. */}
                       <span
                         className={cn(
-                          "absolute top-1/2 -left-3 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand-600 transition-transform duration-200",
+                          "absolute top-1/2 -left-3 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand-500 transition-transform duration-200",
                           active ? "scale-y-100" : "scale-y-0",
                         )}
                         aria-hidden
@@ -147,7 +138,7 @@ export function AppShell({
                       <Icon
                         className={cn(
                           "size-4 transition-colors",
-                          active ? "text-brand-600 dark:text-brand-400" : "text-ink-4 group-hover:text-ink-2",
+                          active ? "text-brand-500" : "text-ink-4 group-hover:text-ink-2",
                         )}
                       />
                       {label}
@@ -184,7 +175,7 @@ export function AppShell({
       )}
 
       <div className="flex min-w-0 flex-col">
-        <header className="no-print sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-surface/80 px-4 backdrop-blur-xl sm:px-6">
+        <header className="no-print sticky top-0 z-30 flex h-[76px] items-center gap-3 border-b border-line bg-surface/85 px-4 backdrop-blur-[10px] sm:px-6">
           <button
             type="button"
             onClick={() => setOpen(true)}
@@ -209,9 +200,9 @@ export function AppShell({
               <span className="hidden sm:inline">Track</span>
             </ButtonLink>
             {!isAdmin && (
-              <ButtonLink href="/book" size="sm">
+              <ButtonLink href="/book" variant="navy" size="sm">
                 <PackagePlus className="size-3.5" />
-                <span className="hidden sm:inline">New booking</span>
+                <span className="hidden sm:inline">Ship now</span>
               </ButtonLink>
             )}
             <span className="mx-1 hidden h-5 w-px bg-line sm:block" aria-hidden />
@@ -238,12 +229,10 @@ export function PageHeader({
   eyebrow?: string;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
-        {eyebrow && <p className="label-caps mb-1.5">{eyebrow}</p>}
-        <h1 className="text-[22px] leading-tight font-bold tracking-[-0.025em] text-ink">
-          {title}
-        </h1>
+        {eyebrow && <p className="eyebrow mb-2.5">{eyebrow}</p>}
+        <h1 className="text-[26px] leading-tight text-ink">{title}</h1>
         {description && (
           <p className="mt-1.5 max-w-2xl text-[13px] leading-relaxed text-ink-3">{description}</p>
         )}

@@ -6,18 +6,20 @@
  * Values fall back to env vars for per-deployment overrides.
  */
 export const BRAND = {
-  name: process.env.NEXT_PUBLIC_BRAND_NAME ?? "ShipLane",
-  productName: process.env.NEXT_PUBLIC_BRAND_PRODUCT ?? "ShipLane Freight",
-  tagline: "B2B freight booking, rated and documented in one pass",
-  legalName: process.env.BRAND_LEGAL_NAME ?? "ShipLane Logistics Private Limited",
+  name: process.env.NEXT_PUBLIC_BRAND_NAME ?? "Shippbie",
+  /** Rendered with the second half in the accent colour. */
+  nameParts: { head: "shipp", tail: "bie" },
+  productName: process.env.NEXT_PUBLIC_BRAND_PRODUCT ?? "Shippbie Freight",
+  tagline: "Global courier and freight, booked and documented in one pass",
+  legalName: process.env.BRAND_LEGAL_NAME ?? "Shippbie Global Courier Private Limited",
   registeredOffice:
     process.env.BRAND_ADDRESS ??
     "Unit 402, Orion Business Park, Sector 62, Noida, Uttar Pradesh, India (201309)",
   cin: process.env.BRAND_CIN ?? "U63030UP2021PTC148812",
   pan: process.env.BRAND_PAN ?? "AAFCS4417K",
   transporterId: process.env.BRAND_TRANSPORTER_ID ?? "09AAFCS4417K1ZP",
-  website: process.env.NEXT_PUBLIC_BRAND_WEBSITE ?? "www.shiplane.example",
-  supportEmail: process.env.NEXT_PUBLIC_BRAND_EMAIL ?? "support@shiplane.example",
+  website: process.env.NEXT_PUBLIC_BRAND_WEBSITE ?? "www.shippbie.com",
+  supportEmail: process.env.NEXT_PUBLIC_BRAND_EMAIL ?? "support@shippbie.com",
   supportPhone: process.env.NEXT_PUBLIC_BRAND_PHONE ?? "1800 200 4455",
 } as const;
 

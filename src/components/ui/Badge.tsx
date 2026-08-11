@@ -2,7 +2,7 @@ import { cn, STATUS_LABEL } from "@/lib/utils";
 
 const TONES = {
   neutral: "bg-inset text-ink-2 ring-line-strong/60",
-  brand: "bg-brand-500/10 text-brand-700 ring-brand-500/20 dark:text-brand-300",
+  brand: "bg-brand-500/12 text-brand-700 ring-brand-500/25 dark:text-brand-400",
   success: "bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-400",
   warning: "bg-amber-500/12 text-amber-700 ring-amber-500/25 dark:text-amber-400",
   danger: "bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-400",
@@ -35,12 +35,14 @@ export function Badge({
  * a glance — so each stage gets a distinct hue that survives both themes.
  */
 const STATUS_TONE: Record<string, string> = {
-  BOOKED: "bg-slate-500/10 text-slate-600 ring-slate-500/20 dark:text-slate-300",
+  // Navy for the stationary stages, brand orange once something is physically
+  // moving, green at rest. That mirrors how the rest of the palette works.
+  BOOKED: "bg-navy-800/10 text-ink-2 ring-navy-800/20 dark:bg-white/8 dark:text-ink-2",
   PICKUP_SCHEDULED: "bg-sky-500/10 text-sky-700 ring-sky-500/20 dark:text-sky-400",
-  PICKED_UP: "bg-indigo-500/10 text-indigo-700 ring-indigo-500/20 dark:text-indigo-400",
-  IN_TRANSIT: "bg-amber-500/12 text-amber-700 ring-amber-500/25 dark:text-amber-400",
+  PICKED_UP: "bg-brand-500/12 text-brand-700 ring-brand-500/25 dark:text-brand-400",
+  IN_TRANSIT: "bg-brand-500/14 text-brand-700 ring-brand-500/30 dark:text-brand-400",
   REACHED_DESTINATION_HUB: "bg-violet-500/10 text-violet-700 ring-violet-500/20 dark:text-violet-400",
-  OUT_FOR_DELIVERY: "bg-orange-500/12 text-orange-700 ring-orange-500/25 dark:text-orange-400",
+  OUT_FOR_DELIVERY: "bg-brand-500/16 text-brand-700 ring-brand-500/35 dark:text-brand-400",
   DELIVERED: "bg-emerald-500/12 text-emerald-700 ring-emerald-500/25 dark:text-emerald-400",
   EXCEPTION: "bg-rose-500/12 text-rose-700 ring-rose-500/25 dark:text-rose-400",
   CANCELLED: "bg-inset text-ink-4 ring-line-strong/60",

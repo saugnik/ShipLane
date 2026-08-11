@@ -9,6 +9,7 @@ import {
 } from "@/lib/documents";
 import { code128 } from "@/lib/pdf/barcode";
 import {
+  ACCENT,
   BRAND as BRAND_INK,
   FILL,
   Fonts,
@@ -137,8 +138,8 @@ function drawHeader(
   const y = top - h;
   rect(page, M, y, CONTENT_W, h, { border: LINE });
 
-  // Brand mark
-  rect(page, M, y, 4, h, { fill: BRAND_INK });
+  // Brand mark — an orange spine down the left edge, the same signal the app uses.
+  rect(page, M, y, 4, h, { fill: ACCENT });
   text(page, BRAND.name.toUpperCase(), M + 12, y + h - 20, {
     font: fonts.bold,
     size: 17,
@@ -472,7 +473,7 @@ function drawCharges(page: PDFPage, fonts: Fonts, doc: ShipmentDoc, top: number)
   text(page, "TOTAL FREIGHT PAYABLE", tx + 8, y + h - 13, {
     font: fonts.bold,
     size: 5.8,
-    color: rgb(0.78, 0.85, 0.96),
+    color: rgb(1, 0.78, 0.68),
   });
   text(page, money(doc.price.grandTotal), tx + 8, y + h - 29, {
     font: fonts.bold,
