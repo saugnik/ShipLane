@@ -5,6 +5,24 @@
  * reads from here, so white-labelling the platform is a one-file change.
  * Values fall back to env vars for per-deployment overrides.
  */
+/**
+ * Canonical public origin, used for absolute URLs in metadata, link previews
+ * and the sitemap.
+ *
+ * Vercel injects VERCEL_PROJECT_PRODUCTION_URL on every deployment, so preview
+ * builds resolve to themselves and production resolves to the custom domain
+ * once one is attached — but an explicit NEXT_PUBLIC_SITE_URL always wins.
+ */
+export function siteUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (explicit) return explicit.replace(/\/$/, "");
+
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (vercel) return `https://${vercel}`;
+
+  return "http://localhost:3000";
+}
+
 export const BRAND = {
   name: process.env.NEXT_PUBLIC_BRAND_NAME ?? "Shippbie",
   /** Rendered with the second half in the accent colour. */

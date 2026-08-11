@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Inter, Space_Grotesk } from "next/font/google";
 import { ThemeScript } from "@/components/ThemeToggle";
-import { BRAND } from "@/lib/brand";
+import { BRAND, siteUrl } from "@/lib/brand";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
@@ -22,13 +22,27 @@ const mono = IBM_Plex_Mono({
   display: "swap",
 });
 
+const title = `${BRAND.name} — Global courier & freight`;
+
 export const metadata: Metadata = {
-  title: {
-    default: `${BRAND.name} — Global courier & freight`,
-    template: `%s · ${BRAND.name}`,
-  },
+  // Without this, Next resolves social-preview and canonical URLs against
+  // localhost and warns on every production build.
+  metadataBase: new URL(siteUrl()),
+  title: { default: title, template: `%s · ${BRAND.name}` },
   description: BRAND.tagline,
   applicationName: BRAND.name,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: BRAND.name,
+    title,
+    description: BRAND.tagline,
+    url: "/",
+  },
+  twitter: { card: "summary_large_image", title, description: BRAND.tagline },
+  // The console and auth screens are behind a login; only the public pages
+  // should ever be indexed, and those opt in individually.
+  robots: { index: true, follow: true },
 };
 
 /**
