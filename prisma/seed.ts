@@ -21,8 +21,17 @@ const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
 
-/** `npm run db:seed -- --carriers-only` skips the sample consignments. */
-const CARRIERS_ONLY = process.argv.includes("--carriers-only");
+/**
+ * Skips the sample consignments and the demo account, leaving only the carrier
+ * panel and the admin — a clean install rather than a populated demo.
+ *
+ * Both forms exist because `prisma migrate reset` runs the seed with no
+ * arguments, so the env var is the only way to reach this from a reset:
+ *   npm run db:seed -- --carriers-only
+ *   SEED_MODE=carriers-only npx prisma migrate reset --force
+ */
+const CARRIERS_ONLY =
+  process.argv.includes("--carriers-only") || process.env.SEED_MODE === "carriers-only";
 
 /** Owner of the seeded consignments — sign in with this to explore the demo. */
 const DEMO_EMAIL = (process.env.DEMO_EMAIL ?? "demo@shiplane.example").trim().toLowerCase();
