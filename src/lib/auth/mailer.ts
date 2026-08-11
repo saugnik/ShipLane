@@ -40,14 +40,26 @@ function template(code: string, purpose: string) {
   };
 }
 
-export async function deliverOtp(email: string, code: string, purpose: string): Promise<void> {
+export type DeliveryResult = { ok: true } | { ok: false; reason: string };
+
+/**
+ * Returns whether the code actually reached the recipient.
+ *
+ * A silent failure here is the worst outcome: the caller would report "code
+ * sent" and the user would wait for an email that never arrives. The commonest
+ * cause is a provider that only allows sending to the account owner until a
+ * domain is verified, so that case gets its own actionable message.
+ */
+export async function deliverOtp(
+  email: string,
+  code: string,
+  purpose: string,
+): Promise<DeliveryResult> {
   const body = template(code, purpose);
 
   if (!mailerConfigured()) {
-    // Never let a code reach the log in production without the operator having
-    // consciously left echo mode on.
     console.info(`[auth] OTP for ${email} (${purpose}): ${code}`);
-    return;
+    return { ok: true };
   }
 
   try {
@@ -65,11 +77,24 @@ export async function deliverOtp(email: string, code: string, purpose: string): 
         html: body.html,
       }),
     });
-    if (!res.ok) {
-      console.error("[auth] mail provider rejected the send:", res.status, await res.text());
+
+    if (res.ok) return { ok: true };
+
+    const detail = await res.text();
+    console.error("[auth] mail provider rejected the send:", res.status, detail);
+
+    // Unverified-domain rejection — by far the most likely misconfiguration.
+    if (res.status === 403 && /verify a domain|only send testing emails/i.test(detail)) {
+      return {
+        ok: false,
+        reason:
+          "Email is not fully configured yet: the sending domain is unverified, so codes can only reach the mailbox that owns the email provider account. Verify a domain and set MAIL_FROM to an address on it.",
+      };
     }
+
+    return { ok: false, reason: "The email provider rejected the message." };
   } catch (err) {
-    // A delivery failure must not leak the code into the response.
     console.error("[auth] mail delivery failed", err);
+    return { ok: false, reason: "Could not reach the email provider." };
   }
 }

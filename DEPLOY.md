@@ -99,7 +99,6 @@ git push -u origin main
    | `AUTH_SECRET` | 32+ random characters — signs the session cookie |
    | `ADMIN_EMAIL` | the single oversight account's address |
    | `ADMIN_PASSWORD` | 10+ characters; only used at seed time |
-   | `RESEND_API_KEY` | optional — see [OTP delivery](#otp-delivery-important) |
    | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | optional Maps key |
 
    `DIRECT_URL` is not optional. The build runs `prisma migrate deploy`, and
@@ -164,29 +163,24 @@ Billing must be enabled on the Google Cloud project even within the free tier.
 
 ---
 
-## OTP delivery (important)
-
-Users sign in with a one-time code emailed to them. **With no `RESEND_API_KEY`
-set, there is no email — the code is shown on screen instead**, so a demo
-deployment still works. That also means anyone who can reach the sign-in page
-can sign in as anyone, and the UI shows a loud banner saying so.
-
-For anything beyond a demo you are personally driving:
-
-1. Get a free key at [resend.com](https://resend.com) and add `RESEND_API_KEY`.
-2. Verify your sending domain, then set `MAIL_FROM` to an address on it.
-   Without a verified domain Resend only delivers to your own address.
-3. Redeploy. The on-screen code disappears automatically.
-
-To disable the on-screen code without configuring email, set `OTP_ECHO=off` —
-codes then appear only in the server logs.
-
 ## Accounts
 
 | | How they sign in | What they can do |
 | --- | --- | --- |
-| **User** | `/login` — email + one-time code | Book, update and track **their own** consignments. Cannot delete anything. |
+| **User** | `/login` — email + password | Book, update and track **their own** consignments. Cannot delete anything. |
 | **Admin** | `/admin/login` — email + password | Read **every** account's consignments, delivery times, products and scan log. Cannot create, edit or delete. |
+
+**No email provider is needed.** Registration validates that the address is real
+and deliverable — correct syntax, a domain that resolves, live MX records, and
+not a disposable provider — then asks for a password. Nothing is sent.
+
+That proves the address *works*, not that the person *owns* it. Only a
+round-trip (a code or a confirmation link) can prove ownership; add one when the
+platform handles real customer money.
+
+If DNS is unavailable, the check **fails open** and accepts the address. Locking
+every signup out because our own resolver is down would be far worse than
+admitting one questionable address.
 
 There is exactly one admin and it cannot be registered — it exists only because
 `npm run db:seed` creates it from `ADMIN_EMAIL` / `ADMIN_PASSWORD`. The public

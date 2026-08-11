@@ -235,7 +235,6 @@ async function main() {
   await prisma.counter.deleteMany();
   await prisma.rate.deleteMany();
   await prisma.partner.deleteMany();
-  await prisma.otpToken.deleteMany();
   // Registered accounts survive a reseed; only the demo account is recreated.
   await prisma.account.deleteMany({ where: { email: DEMO_EMAIL } });
 
@@ -350,14 +349,17 @@ async function main() {
   ).map(toPartnerCommercials);
 
   // Demo consignments need an owner, otherwise no USER can see them.
+  const demoPassword = process.env.DEMO_PASSWORD || "shiplane-demo-2026";
   const demoAccount = await prisma.account.create({
     data: {
       email: DEMO_EMAIL,
       name: "Demo Operations",
       company: "Amwoodo Eco Products Pvt Ltd",
       role: "USER",
+      passwordHash: await hashSecret(demoPassword),
     },
   });
+  console.log(`  demo account: ${DEMO_EMAIL} / ${demoPassword}`);
 
   console.log("Creating demo consignments…");
   const count = await seedDemoOrders(prisma, partners, new Date(), demoAccount.id);

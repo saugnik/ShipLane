@@ -216,8 +216,8 @@ model Account {
   role    String  @default("USER") // USER | ADMIN
   active  Boolean @default(true)
 
-  /// Argon-style scrypt hash. Set for the ADMIN only — users sign in with OTP
-  /// and never have a password to leak.
+  /// scrypt hash. Nullable only because accounts predating password auth may
+  /// not have one; sign-in refuses any account without it.
   passwordHash String?
 
   /// Bumped to invalidate every issued session (password reset, lockout).
@@ -232,20 +232,3 @@ model Account {
   @@index([role])
 }
 
-/// A short-lived one-time code. The code itself is never stored.
-model OtpToken {
-  id        String    @id @default(cuid())
-  email     String
-  codeHash  String
-  purpose   String // LOGIN | REGISTER
-  /// Registration details are parked here until the code is verified, so an
-  /// unverified email never creates an Account row.
-  payload   String?
-  expiresAt DateTime
-  attempts  Int       @default(0)
-  consumedAt DateTime?
-  createdAt DateTime  @default(now())
-
-  @@index([email, purpose])
-  @@index([expiresAt])
-}

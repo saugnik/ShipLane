@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AuthShell } from "@/components/auth/AuthShell";
-import { OtpForm } from "@/components/auth/OtpForm";
+import { LoginForm } from "@/components/auth/LoginForm";
 import { currentSession } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -20,7 +20,7 @@ export default async function LoginPage({
     <AuthShell>
       <Suspense>
         {/* Only relative paths — an absolute `next` would be an open redirect. */}
-        <OtpForm purpose="LOGIN" next={next?.startsWith("/") ? next : undefined} />
+        <LoginForm next={next?.startsWith("/") ? next : undefined} />
       </Suspense>
     </AuthShell>
   );

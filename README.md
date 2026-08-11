@@ -45,8 +45,15 @@ Two roles, enforced server-side on every route:
 
 | | Sign-in | Rights |
 | --- | --- | --- |
-| **User** | `/login` — email + one-time code | Book, update and track **their own** consignments. Cannot delete. |
+| **User** | `/login` — email + password | Book, update and track **their own** consignments. Cannot delete. |
 | **Admin** | `/admin/login` — email + password | Read **every** account's traffic. Cannot create, edit or delete. |
+
+Registration checks the email is **deliverable** before asking for a password:
+correct syntax, a domain that resolves, live MX records (with an A-record
+fallback per RFC 5321), no disposable providers, and a "did you mean gmail.com?"
+nudge on common typos. No mail is sent, so this proves the address works — not
+that the person owns it. If DNS is unreachable the check fails **open**, since
+blocking every signup over our own resolver trouble is the worse failure.
 
 Nothing on the platform deletes — a user may not, and the admin may not change
 anything, so no role holds delete rights. A booked consignment is a commercial
@@ -54,9 +61,9 @@ record; it is superseded, never erased.
 
 There is exactly one admin, seeded from `ADMIN_EMAIL` / `ADMIN_PASSWORD`. It has
 no registration path, the public site links to it from nowhere, and
-`/api/auth/request-otp` refuses the admin address with the same "no account"
-message it gives any unknown email — so the OTP screen cannot be used to
-discover that an admin exists.
+`/api/auth/login` refuses the admin address with the same "credentials are not
+valid" message it gives any wrong password — so the public sign-in cannot be
+used to discover that an admin exists.
 
 ## The booking flow
 
