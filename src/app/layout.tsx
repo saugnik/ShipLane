@@ -22,7 +22,7 @@ const mono = IBM_Plex_Mono({
   display: "swap",
 });
 
-const title = `${BRAND.name} — Global courier & freight`;
+const title = `${BRAND.name} — Nationwide courier & freight`;
 
 export const metadata: Metadata = {
   // Without this, Next resolves social-preview and canonical URLs against

@@ -38,13 +38,13 @@ export function RoutePanel() {
         <circle cx="340" cy="60" r="11" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.5" />
 
         <text x="58" y="342" className="fill-white font-mono text-[11px] tracking-wider">
-          DELHI
+          MUMBAI
         </text>
-        <text x="286" y="46" className="fill-white font-mono text-[11px] tracking-wider">
-          ROTTERDAM
+        <text x="290" y="46" className="fill-white font-mono text-[11px] tracking-wider">
+          GUWAHATI
         </text>
         <text x="180" y="200" className="font-mono text-[11px] tracking-wider" fill="#AEB9CC">
-          DUBAI HUB
+          NAGPUR HUB
         </text>
 
         <circle r="5.5" fill="var(--color-brand-500)">

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { ArrowRight, Boxes, CalendarClock, PackageSearch, Radar, Truck } from "lucide-react";
 import { TrackingTimeline, type TrackingEventView } from "@/components/TrackingTimeline";
 import { StatusBadge } from "@/components/ui/Badge";
@@ -26,9 +25,13 @@ type Shipment = {
   events: TrackingEventView[];
 };
 
-export function TrackClient() {
-  const params = useSearchParams();
-  const initial = params.get("lrn") ?? "";
+/**
+ * `initialLrn` is read server-side and passed in rather than pulled from
+ * `useSearchParams()` — that hook forces the component under a Suspense
+ * boundary, and an empty boundary here left the whole page blank.
+ */
+export function TrackClient({ initialLrn = "" }: { initialLrn?: string }) {
+  const initial = initialLrn;
 
   const [lrn, setLrn] = useState(initial);
   const [shipment, setShipment] = useState<Shipment | null>(null);

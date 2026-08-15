@@ -28,7 +28,7 @@ export const BRAND = {
   /** Rendered with the second half in the accent colour. */
   nameParts: { head: "shipp", tail: "bie" },
   productName: process.env.NEXT_PUBLIC_BRAND_PRODUCT ?? "Shippbie Freight",
-  tagline: "Global courier and freight, booked and documented in one pass",
+  tagline: "Nationwide courier and freight, booked and documented in one pass",
   legalName: process.env.BRAND_LEGAL_NAME ?? "Shippbie Global Courier Private Limited",
   registeredOffice:
     process.env.BRAND_ADDRESS ??

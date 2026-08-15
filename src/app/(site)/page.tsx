@@ -1,41 +1,15 @@
 import Link from "next/link";
-import { ChevronsRight, Globe, Package, Truck } from "lucide-react";
+import { ChevronsRight, Package, Truck } from "lucide-react";
 import { ButtonLink } from "@/components/ui/Button";
-import { LogoWord } from "@/components/Logo";
-import { PublicHeader } from "@/components/marketing/PublicHeader";
 import { RoutePanel } from "@/components/marketing/RoutePanel";
 import { TrackBox } from "@/components/marketing/TrackBox";
 import { currentSession } from "@/lib/auth/session";
 import { BRAND } from "@/lib/brand";
+import { SERVICES } from "@/lib/siteNav";
 
 export const dynamic = "force-dynamic";
 
-const SERVICES = [
-  {
-    icon: ChevronsRight,
-    title: "Express",
-    body: "Priority air routing for documents and urgent parcels that cannot wait on a standard lane.",
-    eta: "1–2 business days",
-  },
-  {
-    icon: Package,
-    title: "Standard parcel",
-    body: "Reliable surface and air-surface shipping for everyday domestic and cross-border parcels.",
-    eta: "3–6 business days",
-  },
-  {
-    icon: Truck,
-    title: "Freight & cargo",
-    body: "Palletised and part-truckload freight by road, rail or air, with the LR and e-way bill handled.",
-    eta: "Custom timeline",
-  },
-  {
-    icon: Globe,
-    title: "International",
-    body: "Customs brokerage, duties calculation and compliance built into every cross-border label.",
-    eta: "Door to door",
-  },
-];
+const ICONS = { express: ChevronsRight, standard: Package, freight: Truck } as const;
 
 const STEPS = [
   {
@@ -84,23 +58,21 @@ const RATES = [
     price: "Custom",
     unit: "/ pallet or FTL",
     sub: "For bulk, palletised or recurring lanes.",
-    points: ["Dedicated freight coordinator", "Road, rail or air routing", "Contracted lane rate cards"],
+    points: ["Dedicated freight coordinator", "Road or rail routing", "Contracted lane rate cards"],
     cta: "Talk to sales",
     featured: false,
   },
 ];
 
-export default async function LandingPage() {
+export default async function HomePage() {
   const session = await currentSession();
   const startHref = session ? "/dashboard" : "/register";
 
   return (
-    <div className="min-h-dvh bg-canvas">
-      <PublicHeader signedIn={Boolean(session)} />
-
+    <>
       {/* ------------------------------------------------------------ hero */}
       <section className="pt-16 pb-14 sm:pt-24">
-        <div className="mx-auto grid max-w-[1180px] items-center gap-14 px-5 sm:px-8 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="mx-auto grid max-w-[1240px] items-center gap-14 px-5 sm:px-8 lg:grid-cols-[1.05fr_0.95fr]">
           <div>
             <span className="eyebrow mb-5">Nationwide freight network</span>
             <h1 className="text-[clamp(38px,4.6vw,62px)] leading-[1.04] text-ink">
@@ -140,31 +112,60 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* ------------------------------------------- CTA, straight after the hero */}
+      <section className="pb-20">
+        <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
+          {/* Navy on orange rather than white on orange: white body text over
+              #FF5A1F is only 3.1:1, navy is 5.1:1. */}
+          <div className="flex flex-col items-center gap-5 rounded-[20px] bg-brand-500 px-7 py-14 text-center sm:px-14">
+            <h2 className="max-w-[640px] text-[clamp(26px,3vw,36px)] text-navy-800">
+              Ready to send your first consignment?
+            </h2>
+            <p className="max-w-[480px] text-[15.5px] leading-relaxed text-navy-800">
+              Create an account and get a live rate across every carrier on the panel in under a
+              minute.
+            </p>
+            <div className="mt-1.5 flex flex-wrap justify-center gap-3.5">
+              <Link
+                href={startHref}
+                className="rounded-[8px] bg-navy-800 px-6 py-3.5 text-[14.5px] font-bold text-white transition-transform active:scale-[0.98]"
+              >
+                {session ? "Open the console" : "Create free account"}
+              </Link>
+              <Link
+                href="/track"
+                className="rounded-[8px] border-[1.5px] border-navy-800 px-6 py-3.5 text-[14.5px] font-semibold text-navy-800 transition-colors hover:bg-navy-800/10"
+              >
+                Track a shipment
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ------------------------------------------------------------ trust */}
       <div className="border-y border-line bg-surface">
-        <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-5 px-5 py-[22px] sm:px-8">
+        <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-5 px-5 py-[22px] sm:px-8">
           <span className="text-[13px] font-medium text-ink-3">
             Trusted for time-critical freight by teams at
           </span>
           <div className="flex flex-wrap gap-x-8 gap-y-2">
-            {["Started working"].map(
-              (n) => (
-                <span key={n} className="font-display text-[13px] font-bold text-ink">
-                  {n}
-                </span>
-              ),
-            )}
+            {["Started working"].map((n) => (
+              <span key={n} className="font-display text-[13px] font-bold text-ink">
+                {n}
+              </span>
+            ))}
           </div>
         </div>
       </div>
 
       {/* ------------------------------------------------------------ services */}
       <section id="services" className="scroll-mt-24 py-24">
-        <div className="mx-auto max-w-[1180px] px-5 sm:px-8">
+        <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
           <div className="mb-14 max-w-[600px]">
             <span className="eyebrow mb-3.5">What we move</span>
             <h2 className="text-[clamp(28px,3vw,38px)] leading-[1.12] text-ink">
-              One network, four ways to ship.
+              One network, three ways to ship.
             </h2>
             <p className="mt-3.5 text-[16px] leading-relaxed text-ink-3">
               Pick a speed and let the network handle checkposts, transfers and last mile — or mix
@@ -173,26 +174,35 @@ export default async function LandingPage() {
           </div>
 
           {/* 1px gaps over a line-coloured bed give the hairline-grid look. */}
-          <div className="grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-2 xl:grid-cols-4">
-            {SERVICES.map((s) => (
-              <div key={s.title} className="bg-surface p-8 transition-colors hover:bg-sunken">
-                <span className="grid size-[46px] place-items-center rounded-[10px] bg-canvas">
-                  <s.icon className="size-[22px] text-brand-500" />
-                </span>
-                <h3 className="mt-5 text-[18px] text-ink">{s.title}</h3>
-                <p className="mt-2.5 text-[14.5px] leading-[1.55] text-ink-3">{s.body}</p>
-                <span className="docnum mt-3.5 block text-[12.5px] font-medium text-brand-700 dark:text-brand-400">
-                  {s.eta}
-                </span>
-              </div>
-            ))}
+          <div className="grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-2 xl:grid-cols-3">
+            {SERVICES.map((s) => {
+              const Icon = ICONS[s.id];
+              return (
+                <Link
+                  key={s.id}
+                  href={`/services#${s.id}`}
+                  className="group bg-surface p-8 transition-colors hover:bg-sunken"
+                >
+                  <span className="grid size-[46px] place-items-center rounded-[10px] bg-canvas">
+                    <Icon className="size-[22px] text-brand-500" />
+                  </span>
+                  <h3 className="mt-5 text-[18px] text-ink group-hover:text-brand-700 dark:group-hover:text-brand-400">
+                    {s.title}
+                  </h3>
+                  <p className="mt-2.5 text-[14.5px] leading-[1.55] text-ink-3">{s.body}</p>
+                  <span className="docnum mt-3.5 block text-[12.5px] font-medium text-brand-700 dark:text-brand-400">
+                    {s.eta}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* ------------------------------------------------------------ how */}
       <section id="how" className="scroll-mt-24 pb-24">
-        <div className="mx-auto max-w-[1180px] px-5 sm:px-8">
+        <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
           <div className="panel-navy relative overflow-hidden rounded-[24px] px-7 py-14 sm:px-14">
             <div className="mb-2 max-w-[600px]">
               <span className="eyebrow mb-3.5">The route</span>
@@ -205,7 +215,6 @@ export default async function LandingPage() {
               </p>
             </div>
 
-            {/* Progress rail with a node per stage. */}
             <div className="relative my-12 h-0.5 bg-white/14">
               {[0, 50, 100].map((left) => (
                 <span
@@ -233,7 +242,7 @@ export default async function LandingPage() {
 
       {/* ------------------------------------------------------------ rates */}
       <section id="rates" className="scroll-mt-24 pb-24">
-        <div className="mx-auto max-w-[1180px] px-5 sm:px-8">
+        <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
           <div className="mb-14 max-w-[600px]">
             <span className="eyebrow mb-3.5">Pricing</span>
             <h2 className="text-[clamp(28px,3vw,38px)] leading-[1.12] text-ink">
@@ -293,102 +302,6 @@ export default async function LandingPage() {
           </div>
         </div>
       </section>
-
-      {/* ------------------------------------------------------------ cta */}
-      <section className="pb-24">
-        <div className="mx-auto max-w-[1180px] px-5 sm:px-8">
-          {/* Navy on orange rather than white on orange: white body text over
-              #FF5A1F is only 3.1:1, navy is 5.1:1 — and it reads as a
-              deliberate brand pairing rather than a washed-out overlay. */}
-          <div className="flex flex-col items-center gap-5 rounded-[20px] bg-brand-500 px-7 py-14 text-center sm:px-14">
-            <h2 className="max-w-[640px] text-[clamp(26px,3vw,36px)] text-navy-800">
-              Ready to send your first consignment?
-            </h2>
-            <p className="max-w-[480px] text-[15.5px] leading-relaxed text-navy-800">
-              Create an account and get a live rate across every carrier on the panel in under a
-              minute.
-            </p>
-            <div className="mt-1.5 flex flex-wrap justify-center gap-3.5">
-              <Link
-                href={startHref}
-                className="rounded-[8px] bg-navy-800 px-6 py-3.5 text-[14.5px] font-bold text-white transition-transform active:scale-[0.98]"
-              >
-                {session ? "Open the console" : "Create free account"}
-              </Link>
-              <Link
-                href="/track"
-                className="rounded-[8px] border-[1.5px] border-navy-800 px-6 py-3.5 text-[14.5px] font-semibold text-navy-800 transition-colors hover:bg-navy-800/10"
-              >
-                Track a shipment
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ------------------------------------------------------------ footer */}
-      <footer id="contact" className="panel-navy pt-16 pb-8">
-        <div className="mx-auto max-w-[1180px] px-5 sm:px-8">
-          <div className="grid gap-10 border-b border-white/10 pb-11 md:grid-cols-2 xl:grid-cols-[1.4fr_repeat(3,1fr)]">
-            <div>
-              <LogoWord className="text-panel-ink" />
-              <p className="mt-3.5 max-w-[260px] text-[14px] leading-relaxed text-panel-ink-3">
-                Courier and freight network moving parcels, pallets and cargo across 19,000+ PIN
-                codes with live tracking end to end.
-              </p>
-            </div>
-
-            {[
-              {
-                head: "Product",
-                links: [
-                  ["Create account", "/register"],
-                  ["Sign in", "/login"],
-                  ["Track a shipment", "/track"],
-                ],
-              },
-              {
-                head: "Services",
-                links: [
-                  ["Express", "/#services"],
-                  ["Standard parcel", "/#services"],
-                  ["Freight & cargo", "/#services"],
-                ],
-              },
-              {
-                head: "Support",
-                links: [
-                  [BRAND.supportPhone, `tel:${BRAND.supportPhone.replace(/\s/g, "")}`],
-                  [BRAND.supportEmail, `mailto:${BRAND.supportEmail}`],
-                  ["How it works", "/#how"],
-                ],
-              },
-            ].map((col) => (
-              <div key={col.head}>
-                <h4 className="mb-4 text-[13px] tracking-[0.06em] text-panel-ink uppercase">
-                  {col.head}
-                </h4>
-                {col.links.map(([label, href]) => (
-                  <Link
-                    key={label}
-                    href={href}
-                    className="block py-1.5 text-[14px] break-all text-panel-ink-2 transition-colors hover:text-brand-500"
-                  >
-                    {label}
-                  </Link>
-                ))}
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-6 text-[13px] text-panel-ink-3">
-            <span>© 2026 {BRAND.legalName}. All rights reserved.</span>
-            <span>
-              CIN {BRAND.cin} · Transporter ID {BRAND.transporterId}
-            </span>
-          </div>
-        </div>
-      </footer>
-    </div>
+    </>
   );
 }
