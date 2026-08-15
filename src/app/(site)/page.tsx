@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ChevronsRight, Package, Truck } from "lucide-react";
-import { ButtonLink } from "@/components/ui/Button";
 import { RoutePanel } from "@/components/marketing/RoutePanel";
 import { TrackBox } from "@/components/marketing/TrackBox";
 import { currentSession } from "@/lib/auth/session";
@@ -26,41 +25,6 @@ const STEPS = [
     tag: "DELIVERY",
     title: "Final mile handoff",
     body: "Delivered against a signed POD, or redirected to a pickup point on request.",
-  },
-];
-
-const RATES = [
-  {
-    name: "Standard",
-    price: "₹14",
-    unit: "/ kg, surface",
-    sub: "Best for regular domestic and regional freight.",
-    points: ["3–6 working day delivery", "Scan-level tracking", "Owner-risk carriage"],
-    cta: "Get a quote",
-    featured: false,
-  },
-  {
-    name: "Express",
-    price: "₹29",
-    unit: "/ kg, air",
-    sub: "For time-critical consignments crossing states.",
-    points: [
-      "1–2 working day delivery",
-      "Live scan-by-scan tracking",
-      "Full carrier-risk cover (FOV)",
-      "Priority checkpost clearance",
-    ],
-    cta: "Get a quote",
-    featured: true,
-  },
-  {
-    name: "Freight",
-    price: "Custom",
-    unit: "/ pallet or FTL",
-    sub: "For bulk, palletised or recurring lanes.",
-    points: ["Dedicated freight coordinator", "Road or rail routing", "Contracted lane rate cards"],
-    cta: "Talk to sales",
-    featured: false,
   },
 ];
 
@@ -240,68 +204,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ------------------------------------------------------------ rates */}
-      <section id="rates" className="scroll-mt-24 pb-24">
-        <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
-          <div className="mb-14 max-w-[600px]">
-            <span className="eyebrow mb-3.5">Pricing</span>
-            <h2 className="text-[clamp(28px,3vw,38px)] leading-[1.12] text-ink">
-              Straightforward rates, no checkpost surprises.
-            </h2>
-            <p className="mt-3.5 text-[16px] leading-relaxed text-ink-3">
-              Every quote itemises freight, docket, fuel, FOV, ODA and GST upfront — and the figure
-              you accept is frozen onto the Lorry Receipt.
-            </p>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-3">
-            {RATES.map((r) => (
-              <div
-                key={r.name}
-                className={
-                  r.featured
-                    ? "relative flex flex-col rounded-[16px] border border-brand-500 bg-surface p-8 shadow-lg shadow-brand-500/15"
-                    : "relative flex flex-col rounded-[16px] border border-line bg-surface p-8"
-                }
-              >
-                {r.featured && (
-                  <span className="absolute -top-[11px] left-7 rounded-[5px] bg-brand-600 px-2.5 py-1 text-[10.5px] font-bold tracking-[0.06em] text-white">
-                    MOST BOOKED
-                  </span>
-                )}
-                <span className="label-caps">{r.name}</span>
-                <p className="font-display mt-3 text-[34px] leading-none font-bold text-ink">
-                  {r.price}
-                  <span className="ml-1 font-sans text-[14px] font-medium text-ink-3">{r.unit}</span>
-                </p>
-                <p className="mt-2 text-[13.5px] text-ink-3">{r.sub}</p>
-
-                <ul className="mt-6 mb-7 flex-1">
-                  {r.points.map((p) => (
-                    <li
-                      key={p}
-                      className="flex items-start gap-2.5 border-t border-line py-2.5 text-[14px] text-ink-2 first:border-t-0"
-                    >
-                      <span className="text-brand-600 dark:text-brand-400" aria-hidden>
-                        —
-                      </span>
-                      {p}
-                    </li>
-                  ))}
-                </ul>
-
-                <ButtonLink
-                  href={startHref}
-                  variant={r.featured ? "primary" : "secondary"}
-                  className="w-full"
-                >
-                  {r.cta}
-                </ButtonLink>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
     </>
   );
 }
