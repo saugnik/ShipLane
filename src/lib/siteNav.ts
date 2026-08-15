@@ -37,7 +37,6 @@ export const SITE_NAV: NavItem[] = [
       { href: "/media#brand", label: "Brand assets", blurb: "Logo and usage" },
     ],
   },
-  { href: "/career", label: "Career" },
   { href: "/faqs", label: "FAQs" },
   { href: "/contact", label: "Contact Us" },
 ];

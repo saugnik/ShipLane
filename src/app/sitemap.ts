@@ -11,7 +11,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ["/associates", 0.7],
     ["/support", 0.7],
     ["/media", 0.5],
-    ["/career", 0.5],
     ["/faqs", 0.6],
     ["/contact", 0.7],
     ["/track", 0.6],

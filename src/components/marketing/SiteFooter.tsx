@@ -7,7 +7,6 @@ const COLUMNS = [
     head: "Company",
     links: [
       ["Associates", "/associates"],
-      ["Career", "/career"],
       ["Media", "/media"],
       ["Contact us", "/contact"],
     ],
