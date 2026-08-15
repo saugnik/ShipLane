@@ -11,7 +11,6 @@ import {
   Menu,
   PackagePlus,
   Radar,
-  Truck,
   X,
 } from "lucide-react";
 import { BRAND } from "@/lib/brand";
@@ -39,10 +38,9 @@ function navFor(role: Role) {
       },
       {
         section: "Network",
-        items: [
-          { href: "/partners", label: "Carriers & rates", icon: Truck },
-          { href: "/track", label: "Track", icon: Radar },
-        ],
+        // "Carriers & rates" is hidden until the rate API is wired in — the
+        // published cards are seed data. The quoting engine still runs on them.
+        items: [{ href: "/track", label: "Track", icon: Radar }],
       },
     ];
   }
@@ -58,10 +56,7 @@ function navFor(role: Role) {
     },
     {
       section: "Network",
-      items: [
-        { href: "/partners", label: "Carriers & rates", icon: Truck },
-        { href: "/track", label: "Track", icon: Radar },
-      ],
+      items: [{ href: "/track", label: "Track", icon: Radar }],
     },
   ];
 }
