@@ -4,8 +4,16 @@
  * One source of truth so the header, the mobile drawer and the footer can never
  * drift apart. `children` turns a tab into a dropdown.
  */
+import { SUPPORT_TOPICS, supportHref } from "@/lib/support";
+
 export type NavChild = { href: string; label: string; blurb?: string };
-export type NavItem = { href: string; label: string; children?: NavChild[] };
+export type NavItem = {
+  href: string;
+  label: string;
+  children?: NavChild[];
+  /** Long menus render as a plain list — blurbs on ten rows is a wall of text. */
+  dense?: boolean;
+};
 
 export const SITE_NAV: NavItem[] = [
   { href: "/", label: "Home" },
@@ -22,10 +30,10 @@ export const SITE_NAV: NavItem[] = [
   {
     href: "/support",
     label: "Support",
+    dense: true,
     children: [
-      { href: "/track", label: "Track a shipment", blurb: "Live status by LRN" },
-      { href: "/support#claims", label: "Raise a claim", blurb: "Shortage or damage" },
-      { href: "/faqs", label: "FAQs", blurb: "Common questions" },
+      { href: "/track", label: "Track A Shipment" },
+      ...SUPPORT_TOPICS.map((t) => ({ href: supportHref(t.slug), label: t.title })),
     ],
   },
   {

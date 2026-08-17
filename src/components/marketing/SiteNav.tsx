@@ -99,15 +99,30 @@ export function SiteNav({ signedIn = false }: { signedIn?: boolean }) {
                 </Link>
 
                 {hasMenu && open === item.label && (
-                  <div className="animate-in-up absolute top-full left-1/2 w-64 -translate-x-1/2 pt-1">
+                  <div
+                    className={cn(
+                      "animate-in-up absolute top-full left-1/2 -translate-x-1/2 pt-1",
+                      item.dense ? "w-[19rem]" : "w-64",
+                    )}
+                  >
                     <ul className="overflow-hidden rounded-xl border border-line bg-surface py-1.5 shadow-lg">
                       {item.children!.map((child) => (
                         <li key={child.href}>
                           <Link
                             href={child.href}
-                            className="block px-4 py-2.5 transition-colors hover:bg-inset"
+                            className={cn(
+                              "block px-4 transition-colors hover:bg-inset",
+                              item.dense ? "py-2" : "py-2.5",
+                            )}
                           >
-                            <span className="block text-[13.5px] font-semibold text-ink">
+                            <span
+                              className={cn(
+                                "block text-ink",
+                                item.dense
+                                  ? "text-[13.5px] font-medium"
+                                  : "text-[13.5px] font-semibold",
+                              )}
+                            >
                               {child.label}
                             </span>
                             {child.blurb && (

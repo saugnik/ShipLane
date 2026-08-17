@@ -23,9 +23,11 @@ const COLUMNS = [
     head: "Support",
     links: [
       ["Track a shipment", "/track"],
+      ["Mandatory documentation", "/support/mandatory-documentation"],
+      ["Banned/restricted items", "/support/restricted-items"],
+      ["Volumetric information", "/support/volumetric"],
+      ["Register a complaint", "/support/complaint"],
       ["FAQs", "/faqs"],
-      ["Raise a claim", "/support#claims"],
-      ["Sign in", "/login"],
     ],
   },
 ] as const;

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { siteUrl } from "@/lib/brand";
+import { SUPPORT_TOPICS, supportHref } from "@/lib/support";
 
 /** Public pages only — everything else needs a session. */
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -14,6 +15,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ["/faqs", 0.6],
     ["/contact", 0.7],
     ["/track", 0.6],
+    // Support reference pages come from the same registry as the nav.
+    ...SUPPORT_TOPICS.map((t) => [supportHref(t.slug), 0.5] as [string, number]),
   ];
 
   return pages.map(([path, priority]) => ({
