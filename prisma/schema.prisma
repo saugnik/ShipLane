@@ -232,3 +232,28 @@ model Account {
   @@index([role])
 }
 
+/// A one-time code issued to an email address and not yet spent.
+///
+/// Rows are kept after use rather than deleted: `consumedAt` makes replay
+/// visible, and the recent history for an address is what the send throttle
+/// counts. Codes are stored as scrypt hashes — a leaked table must not let
+/// anyone walk in, and six digits is only 10^6 to brute force.
+model EmailOtp {
+  id       String @id @default(cuid())
+  email    String
+  codeHash String
+  purpose  String @default("REGISTER") // REGISTER | LOGIN
+
+  expiresAt  DateTime
+  consumedAt DateTime?
+
+  /// Wrong guesses so far. The code dies at MAX_ATTEMPTS, so an attacker gets
+  /// a handful of tries rather than the whole keyspace.
+  attempts Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([email, purpose, createdAt])
+  @@index([expiresAt])
+}
+

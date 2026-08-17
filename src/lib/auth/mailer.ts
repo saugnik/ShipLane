@@ -1,21 +1,25 @@
 import { BRAND } from "@/lib/brand";
 
 /**
- * OTP delivery.
+ * OTP delivery over Mailjet.
  *
- * Real email needs a provider key. When none is configured the code is logged
- * server-side and echoed to the screen so a demo deployment is still usable —
- * `otpIsEchoed()` gates that, and the UI shows a loud banner whenever it is on,
- * because echoing a login code to the browser means anyone who can reach the
- * page can sign in as anyone.
+ * Real email needs MAILJET_API_KEY and MAILJET_SECRET_KEY. When neither is
+ * configured the code is logged server-side and echoed to the screen so a demo
+ * deployment is still usable — `otpIsEchoed()` gates that, and the UI shows a
+ * loud banner whenever it is on, because echoing a login code to the browser
+ * means anyone who can reach the page can sign in as anyone.
  *
- * Set RESEND_API_KEY (and optionally MAIL_FROM) to switch to real delivery.
+ * The sender address in MAIL_FROM must be a validated sender on the Mailjet
+ * account; Mailjet rejects anything else outright.
  */
 
-const resendKey = () => process.env.RESEND_API_KEY?.trim() ?? "";
+const API = "https://api.mailjet.com/v3.1/send";
+
+const key = () => process.env.MAILJET_API_KEY?.trim() ?? "";
+const secretKey = () => process.env.MAILJET_SECRET_KEY?.trim() ?? "";
 
 export function mailerConfigured(): boolean {
-  return resendKey().length > 0;
+  return key().length > 0 && secretKey().length > 0;
 }
 
 /** True when the code is returned to the client instead of emailed. */
@@ -25,17 +29,26 @@ export function otpIsEchoed(): boolean {
   return process.env.OTP_ECHO !== "off";
 }
 
+function sender() {
+  return {
+    Email: process.env.MAIL_FROM?.trim() || `no-reply@${BRAND.website.replace(/^www\./, "")}`,
+    Name: process.env.MAIL_FROM_NAME?.trim() || BRAND.name,
+  };
+}
+
 function template(code: string, purpose: string) {
   const action = purpose === "REGISTER" ? "complete your registration" : "sign in";
   return {
     subject: `${code} is your ${BRAND.name} verification code`,
     text: `Your ${BRAND.name} code is ${code}. Use it to ${action}. It expires in 10 minutes. If you did not request it, ignore this email.`,
-    html: `<div style="font-family:system-ui,sans-serif;max-width:480px">
-  <h2 style="margin:0 0 4px">${BRAND.name}</h2>
-  <p style="color:#555;margin:0 0 24px">Verification code</p>
-  <p style="font-size:34px;font-weight:700;letter-spacing:8px;margin:0 0 24px">${code}</p>
-  <p style="color:#555">Use this code to ${action}. It expires in 10 minutes.</p>
-  <p style="color:#888;font-size:12px">If you did not request this, you can ignore this email.</p>
+    html: `<div style="font-family:system-ui,-apple-system,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
+  <h2 style="margin:0 0 4px;color:#0b2447;font-size:20px">${BRAND.name}</h2>
+  <p style="color:#5b6b82;margin:0 0 28px;font-size:14px">Verification code</p>
+  <p style="font-size:34px;font-weight:700;letter-spacing:8px;margin:0 0 28px;color:#0b2447">${code}</p>
+  <p style="color:#5b6b82;font-size:14px;line-height:1.6">Use this code to ${action}. It expires in 10 minutes.</p>
+  <p style="color:#8a96ac;font-size:12px;line-height:1.6;margin-top:28px;border-top:1px solid #e2e6ed;padding-top:16px">
+    If you did not request this, you can ignore this email — no account is created without the code.
+  </p>
 </div>`,
   };
 }
@@ -46,9 +59,9 @@ export type DeliveryResult = { ok: true } | { ok: false; reason: string };
  * Returns whether the code actually reached the recipient.
  *
  * A silent failure here is the worst outcome: the caller would report "code
- * sent" and the user would wait for an email that never arrives. The commonest
- * cause is a provider that only allows sending to the account owner until a
- * domain is verified, so that case gets its own actionable message.
+ * sent" and the user would wait for an email that never arrives. Mailjet also
+ * answers 200 for a payload it then refuses per-message, so the per-message
+ * Status is checked rather than just the HTTP code.
  */
 export async function deliverOtp(
   email: string,
@@ -62,37 +75,64 @@ export async function deliverOtp(
     return { ok: true };
   }
 
+  const auth = Buffer.from(`${key()}:${secretKey()}`).toString("base64");
+
   try {
-    const res = await fetch("https://api.resend.com/emails", {
+    const res = await fetch(API, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${resendKey()}`,
+        Authorization: `Basic ${auth}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: process.env.MAIL_FROM || `${BRAND.name} <onboarding@resend.dev>`,
-        to: [email],
-        subject: body.subject,
-        text: body.text,
-        html: body.html,
+        Messages: [
+          {
+            From: sender(),
+            To: [{ Email: email }],
+            Subject: body.subject,
+            TextPart: body.text,
+            HTMLPart: body.html,
+            // Surfaces in Mailjet's dashboard so a failed send is traceable to
+            // the flow that triggered it.
+            CustomID: `otp-${purpose.toLowerCase()}`,
+          },
+        ],
       }),
     });
 
-    if (res.ok) return { ok: true };
-
     const detail = await res.text();
-    console.error("[auth] mail provider rejected the send:", res.status, detail);
 
-    // Unverified-domain rejection — by far the most likely misconfiguration.
-    if (res.status === 403 && /verify a domain|only send testing emails/i.test(detail)) {
-      return {
-        ok: false,
-        reason:
-          "Email is not fully configured yet: the sending domain is unverified, so codes can only reach the mailbox that owns the email provider account. Verify a domain and set MAIL_FROM to an address on it.",
-      };
+    if (res.status === 401) {
+      console.error("[auth] Mailjet rejected the credentials");
+      return { ok: false, reason: "The email provider rejected our credentials." };
     }
 
-    return { ok: false, reason: "The email provider rejected the message." };
+    if (!res.ok) {
+      console.error("[auth] Mailjet send failed:", res.status, detail);
+      if (/from.*not.*allow|sender.*not.*valid|unauthorized sender/i.test(detail)) {
+        return {
+          ok: false,
+          reason:
+            "Email is not fully configured yet: the sending address is not a validated sender on the Mailjet account. Add and confirm it, then set MAIL_FROM to that address.",
+        };
+      }
+      return { ok: false, reason: "The email provider rejected the message." };
+    }
+
+    // 200 does not mean delivered — Mailjet reports per-message status here.
+    try {
+      const payload = JSON.parse(detail) as { Messages?: { Status?: string; Errors?: unknown }[] };
+      const status = payload.Messages?.[0]?.Status;
+      if (status && status !== "success") {
+        console.error("[auth] Mailjet accepted the request but refused the message:", detail);
+        return { ok: false, reason: "The email provider could not send to that address." };
+      }
+    } catch {
+      // Unparseable 200 — treat the HTTP status as authoritative rather than
+      // failing a send that probably went out.
+    }
+
+    return { ok: true };
   } catch (err) {
     console.error("[auth] mail delivery failed", err);
     return { ok: false, reason: "Could not reach the email provider." };

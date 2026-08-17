@@ -63,8 +63,11 @@ export async function checkEmail(raw: string): Promise<EmailCheck> {
     return { ok: false, error: `Did you mean ${suggestion}?`, suggestion };
   }
 
+  // Only throwaway providers are refused. Gmail, Outlook, Yahoo, Rediffmail and
+  // the rest are ordinary addresses — plenty of small consignors book from a
+  // personal mailbox, and turning them away would cost real business.
   if (DISPOSABLE.has(domain)) {
-    return { ok: false, error: "Please use a permanent work email, not a disposable one" };
+    return { ok: false, error: "That looks like a disposable address. Use one you can receive mail at." };
   }
 
   const deliverable = await domainAcceptsMail(domain);

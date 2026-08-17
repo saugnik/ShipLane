@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -11,6 +11,7 @@ import {
   EyeOff,
   Lock,
   Mail,
+  ShieldCheck,
   TriangleAlert,
   User,
 } from "lucide-react";
@@ -20,15 +21,23 @@ import { STRENGTH_LABEL, passwordStrength } from "@/lib/auth/password";
 import { cn } from "@/lib/utils";
 
 /**
- * Two-stage registration: the address is checked for deliverability before the
- * form will accept a password. Splitting it this way means a typo is caught at
- * the field that caused it, rather than after the user has filled everything in.
+ * Three-stage registration: address → emailed code → details.
+ *
+ * Splitting it this way means a typo is caught at the field that caused it, and
+ * the account is only ever created for an address the person can actually read.
+ * Each stage carries forward exactly one thing — the verified address, then the
+ * verification token — so going back never leaves stale state behind.
  */
+type Stage = "email" | "code" | "details";
+
 export function RegisterForm() {
-  const [stage, setStage] = useState<"email" | "details">("email");
+  const [stage, setStage] = useState<Stage>("email");
 
   const [email, setEmail] = useState("");
-  const [domain, setDomain] = useState("");
+  const [code, setCode] = useState("");
+  const [token, setToken] = useState("");
+  const [echoedCode, setEchoedCode] = useState<string | null>(null);
+
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
   const [phone, setPhone] = useState("");
@@ -38,37 +47,79 @@ export function RegisterForm() {
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [suggestion, setSuggestion] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
 
+  const codeRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
+    if (stage === "code") codeRef.current?.focus();
     if (stage === "details") nameRef.current?.focus();
   }, [stage]);
+
+  // Resend countdown, so the button says how long rather than just refusing.
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
 
   const strength = useMemo(() => passwordStrength(password), [password]);
   const mismatch = confirm.length > 0 && confirm !== password;
 
-  const verifyEmail = async (e: React.FormEvent) => {
+  const sendCode = useCallback(
+    async (address: string) => {
+      setBusy(true);
+      setError(null);
+      setSuggestion(null);
+      try {
+        const res = await fetch("/api/auth/otp/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: address }),
+        });
+        const payload = await res.json();
+        if (!res.ok) {
+          setError(payload.error ?? "Could not send a code to that address");
+          const m = /Did you mean (\S+)\?/.exec(payload.error ?? "");
+          if (m) setSuggestion(m[1]);
+          return false;
+        }
+        setEmail(payload.data.email);
+        setEchoedCode(payload.data.echoed ? (payload.data.code ?? null) : null);
+        setNotice(`Code sent to ${payload.data.email}. It expires in ${payload.data.expiresInMinutes} minutes.`);
+        setCooldown(30);
+        setStage("code");
+        return true;
+      } catch {
+        setError("Network error — please try again.");
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [],
+  );
+
+  const verifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    setSuggestion(null);
     try {
-      const res = await fetch("/api/auth/check-email", {
+      const res = await fetch("/api/auth/otp/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, code }),
       });
       const payload = await res.json();
       if (!res.ok) {
-        setError(payload.error ?? "Could not verify that address");
-        // "Did you mean …" comes back inside the message; offer a one-click fix.
-        const m = /Did you mean (\S+)\?/.exec(payload.error ?? "");
-        if (m) setSuggestion(m[1]);
+        setError(payload.error ?? "That code did not work");
         return;
       }
-      setEmail(payload.data.email);
-      setDomain(payload.data.domain);
+      setToken(payload.data.verificationToken);
+      setNotice(null);
       setStage("details");
     } catch {
       setError("Network error — please try again.");
@@ -89,11 +140,17 @@ export function RegisterForm() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name, company, phone, password }),
+        body: JSON.stringify({ email, name, company, phone, password, verificationToken: token }),
       });
       const payload = await res.json();
       if (!res.ok) {
         setError(payload.error ?? "Could not create your account");
+        // An expired verification means starting the code step again.
+        if (res.status === 403) {
+          setToken("");
+          setCode("");
+          setStage("code");
+        }
         return;
       }
       // Full navigation so the server picks up the new session cookie.
@@ -105,15 +162,18 @@ export function RegisterForm() {
     }
   };
 
+  const subtitle =
+    stage === "email"
+      ? "Any email you can receive mail at — personal or work."
+      : stage === "code"
+        ? "We sent you a 6-digit code. Enter it to confirm the address is yours."
+        : "Address confirmed. Now set a password.";
+
   return (
     <div className="w-full">
       <div className="mb-7">
         <h1 className="text-[22px] font-bold tracking-[-0.025em] text-ink">Create your account</h1>
-        <p className="mt-1.5 text-[13px] leading-relaxed text-ink-3">
-          {stage === "email"
-            ? "Start with your work email — we'll check it can receive mail."
-            : "Your address checks out. Now set a password."}
-        </p>
+        <p className="mt-1.5 text-[13px] leading-relaxed text-ink-3">{subtitle}</p>
       </div>
 
       {error && (
@@ -138,12 +198,43 @@ export function RegisterForm() {
         </div>
       )}
 
-      {stage === "email" ? (
-        <form onSubmit={verifyEmail} className="flex flex-col gap-4">
+      {notice && !error && stage === "code" && (
+        <div className="mb-4 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-2.5">
+          <p className="flex items-start gap-1.5 text-xs font-medium text-emerald-800 dark:text-emerald-200">
+            <CheckCircle2 className="mt-px size-3.5 shrink-0" />
+            {notice}
+          </p>
+        </div>
+      )}
+
+      {/* Loud on purpose: with no mail provider configured the code is shown in
+          the browser, which means anyone who can reach this page can register
+          any address. Fine for a demo, never for production. */}
+      {echoedCode && stage === "code" && (
+        <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/12 px-3.5 py-3">
+          <p className="flex items-start gap-1.5 text-xs font-semibold text-amber-900 dark:text-amber-200">
+            <TriangleAlert className="mt-px size-3.5 shrink-0" />
+            Demo mode — no mail provider configured
+          </p>
+          <p className="mt-1 ml-5 text-xs text-amber-900/90 dark:text-amber-200/90">
+            Your code is <span className="docnum font-bold">{echoedCode}</span>. Set
+            MAILJET_API_KEY and MAILJET_SECRET_KEY to send it by email instead.
+          </p>
+        </div>
+      )}
+
+      {stage === "email" && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void sendCode(email);
+          }}
+          className="flex flex-col gap-4"
+        >
           <Field
-            label="Work email"
+            label="Email address"
             required
-            hint="We check the domain has a live mail server before continuing."
+            hint="Gmail, Outlook, Yahoo or your own domain — all work."
           >
             {({ id }) => (
               <div className="relative">
@@ -155,7 +246,7 @@ export function RegisterForm() {
                   type="email"
                   autoComplete="email"
                   className="pl-9"
-                  placeholder="you@company.com"
+                  placeholder="you@gmail.com"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -167,32 +258,82 @@ export function RegisterForm() {
           </Field>
 
           <Button type="submit" size="lg" loading={busy} disabled={!email.trim()}>
-            Continue
+            Send verification code
             <ArrowRight className="size-4" />
           </Button>
         </form>
-      ) : (
-        <form onSubmit={submit} className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-2.5">
-            <p className="flex min-w-0 items-center gap-2 text-xs text-emerald-800 dark:text-emerald-200">
-              <CheckCircle2 className="size-4 shrink-0" />
+      )}
+
+      {stage === "code" && (
+        <form onSubmit={verifyCode} className="flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-sunken px-3.5 py-2.5">
+            <p className="flex min-w-0 items-center gap-2 text-xs text-ink-2">
+              <Mail className="size-4 shrink-0 text-ink-4" />
               <span className="truncate font-medium">{email}</span>
             </p>
             <button
               type="button"
               onClick={() => {
                 setStage("email");
+                setCode("");
                 setError(null);
+                setNotice(null);
+                setEchoedCode(null);
               }}
-              className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-emerald-800 hover:underline dark:text-emerald-200"
+              className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-brand-600 hover:underline dark:text-brand-300"
             >
               <ArrowLeft className="size-3" />
               Change
             </button>
           </div>
-          <p className="-mt-2 text-[11px] text-ink-4">
-            {domain} accepts email. We have not sent anything to it.
-          </p>
+
+          <Field label="Verification code" required>
+            {({ id }) => (
+              <div className="relative">
+                <ShieldCheck className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-4" />
+                <Input
+                  ref={codeRef}
+                  id={id}
+                  required
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  placeholder="000000"
+                  className="docnum pl-9 text-center text-[20px] tracking-[0.5em]"
+                  value={code}
+                  onChange={(e) => {
+                    setCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+                    setError(null);
+                  }}
+                />
+              </div>
+            )}
+          </Field>
+
+          <Button type="submit" size="lg" loading={busy} disabled={code.length !== 6}>
+            Verify email
+            <ArrowRight className="size-4" />
+          </Button>
+
+          <button
+            type="button"
+            disabled={busy || cooldown > 0}
+            onClick={() => void sendCode(email)}
+            className="text-center text-xs font-medium text-ink-3 hover:text-ink disabled:cursor-not-allowed disabled:text-ink-4"
+          >
+            {cooldown > 0 ? `Resend code in ${cooldown}s` : "Did not get it? Resend code"}
+          </button>
+        </form>
+      )}
+
+      {stage === "details" && (
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          <div className="flex items-center gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-2.5">
+            <CheckCircle2 className="size-4 shrink-0 text-emerald-700 dark:text-emerald-300" />
+            <p className="min-w-0 text-xs text-emerald-800 dark:text-emerald-200">
+              <span className="truncate font-medium">{email}</span> verified
+            </p>
+          </div>
 
           <Field label="Your name" required>
             {({ id }) => (
@@ -212,7 +353,7 @@ export function RegisterForm() {
             )}
           </Field>
 
-          <Field label="Company">
+          <Field label="Company" hint="Optional — leave blank if you are shipping as an individual.">
             {({ id }) => (
               <div className="relative">
                 <Building2 className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-4" />
@@ -297,7 +438,11 @@ export function RegisterForm() {
             )}
           </Field>
 
-          <Field label="Confirm password" required error={mismatch ? "Passwords do not match" : undefined}>
+          <Field
+            label="Confirm password"
+            required
+            error={mismatch ? "Passwords do not match" : undefined}
+          >
             {({ id, invalid }) => (
               <Input
                 id={id}

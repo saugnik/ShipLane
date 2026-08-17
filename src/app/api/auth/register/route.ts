@@ -3,6 +3,7 @@ import { handle, HttpError } from "@/lib/api";
 import { prisma } from "@/lib/db";
 import { hashSecret } from "@/lib/auth/crypto";
 import { checkEmail } from "@/lib/auth/email";
+import { readVerification } from "@/lib/auth/otp";
 import { checkPassword } from "@/lib/auth/password";
 import { setSessionCookie, signSession } from "@/lib/auth/session";
 
@@ -16,6 +17,7 @@ const schema = z.object({
     .union([z.literal(""), z.string().trim().regex(/^[6-9][0-9]{9}$/, "Enter a valid 10-digit mobile")])
     .optional(),
   password: z.string().min(1, "Choose a password"),
+  verificationToken: z.string().min(1, "Verify your email address first"),
 });
 
 export async function POST(req: Request) {
@@ -26,6 +28,13 @@ export async function POST(req: Request) {
     // /check-email, but that result is a hint, not a permission.
     const email = await checkEmail(input.email);
     if (!email.ok) throw new HttpError(email.error, 422);
+
+    // Ownership, not just deliverability. Without a token signed by us for this
+    // exact address, anyone could register any address they can spell.
+    const verified = await readVerification(input.verificationToken, email.email, "REGISTER");
+    if (!verified) {
+      throw new HttpError("Your email verification has expired. Request a new code.", 403);
+    }
 
     const password = checkPassword(input.password, { email: email.email, name: input.name });
     if (!password.ok) throw new HttpError(password.error, 422);
