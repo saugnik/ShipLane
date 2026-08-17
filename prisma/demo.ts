@@ -48,10 +48,10 @@ type DemoOrder = {
 const party = (p: Party) => p;
 
 const DELHI = party({
-  company: "Anw Products Pvt Ltd",
+  company: "XYZ Products Pvt Ltd",
   contact: "Ravi Menon",
   phone: "9810012345",
-  email: "despatch@anw.example",
+  email: "despatch@xyz.example",
   address: "246/68 Master Complex, Near Prince Apartment, I.P. Extension",
   city: "Delhi",
   state: "Delhi",

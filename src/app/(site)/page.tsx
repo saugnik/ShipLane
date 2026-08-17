@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ChevronsRight, Package, Truck } from "lucide-react";
-import { RoutePanel } from "@/components/marketing/RoutePanel";
+import { ConsolePanel } from "@/components/marketing/ConsolePanel";
+import { IndiaRouteMap } from "@/components/marketing/IndiaRouteMap";
+import { NetworkTicker } from "@/components/marketing/NetworkTicker";
 import { TrackBox } from "@/components/marketing/TrackBox";
 import { currentSession } from "@/lib/auth/session";
 import { BRAND } from "@/lib/brand";
@@ -34,92 +36,81 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* ------------------------------------------------------------ hero */}
-      <section className="pt-16 pb-14 sm:pt-24">
-        <div className="mx-auto grid max-w-[1240px] items-center gap-14 px-5 sm:px-8 lg:grid-cols-[1.05fr_0.95fr]">
+      {/* ------------------------------------------------------------ hero
+          Renders dark in both themes. The map only works against a night
+          surface, and half-toning it for light mode would give two designs to
+          maintain and neither of them the one that was asked for. */}
+      <section className="command relative overflow-hidden">
+        <div className="command-grid pointer-events-none absolute inset-0" aria-hidden />
+
+        <div className="relative mx-auto grid max-w-[1240px] items-center gap-10 px-5 pt-14 pb-8 sm:px-8 sm:pt-20 lg:grid-cols-[1.02fr_1.08fr] lg:gap-8">
           <div>
-            <span className="eyebrow mb-5">Nationwide freight network</span>
-            <h1 className="text-[clamp(38px,4.6vw,62px)] leading-[1.04] text-ink">
+            <span className="mb-5 flex items-center gap-3">
+              <span className="h-px w-7 bg-brand-500" aria-hidden />
+              <span className="text-[12px] font-semibold tracking-[0.14em] text-brand-400 uppercase">
+                Nationwide freight network
+              </span>
+            </span>
+
+            <h1 className="text-[clamp(38px,4.7vw,62px)] leading-[1.03] text-white">
               Delivery that moves at{" "}
-              {/* brand-600, not 500 — the raw brand orange misses 3:1 even at
-                  display size on the paper canvas. */}
-              <em className="text-brand-600 not-italic dark:text-brand-400">
-                the speed of business.
-              </em>
+              <em className="text-brand-500 not-italic">the speed of business.</em>
             </h1>
-            <p className="mt-5 max-w-[480px] text-[17.5px] leading-relaxed text-ink-3">
+
+            <p className="mt-5 max-w-[470px] text-[17px] leading-relaxed text-[#a8b7d0]">
               {BRAND.name} rates every carrier on your panel, enforces the paperwork, and prints the
               Lorry Receipt and carton tags before the vehicle reaches your dock.
             </p>
 
-            <div className="mt-8 max-w-[480px]">
-              <TrackBox />
+            <div className="mt-8 max-w-[470px]">
+              <TrackBox onDark />
             </div>
 
-            <dl className="mt-7 flex flex-wrap gap-x-9 gap-y-4">
+            <dl className="mt-8 flex flex-wrap gap-x-10 gap-y-4">
               {[
                 ["19,000+", "PIN codes served"],
                 ["5", "Carriers rated per booking"],
                 ["99.2%", "On-time rate"],
               ].map(([num, lab]) => (
                 <div key={lab}>
-                  <dt className="font-display text-[22px] font-bold text-ink">{num}</dt>
-                  <dd className="mt-0.5 text-[12.5px] text-ink-3">{lab}</dd>
+                  <dt className="font-display text-[23px] font-bold text-white">{num}</dt>
+                  <dd className="mt-0.5 text-[12.5px] text-[#8a9bb8]">{lab}</dd>
                 </div>
               ))}
             </dl>
           </div>
 
           <div className="order-first lg:order-none">
-            <RoutePanel />
+            <IndiaRouteMap />
           </div>
         </div>
+
+        <NetworkTicker />
       </section>
 
-      {/* ------------------------------------------- CTA, straight after the hero */}
-      <section className="pb-20">
+      {/* ------------------------------------- console, straight after the hero */}
+      <section className="py-20">
         <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
-          {/* Navy on orange rather than white on orange: white body text over
-              #FF5A1F is only 3.1:1, navy is 5.1:1. */}
-          <div className="flex flex-col items-center gap-5 rounded-[20px] bg-brand-500 px-7 py-14 text-center sm:px-14">
-            <h2 className="max-w-[640px] text-[clamp(26px,3vw,36px)] text-navy-800">
-              Ready to send your first consignment?
-            </h2>
-            <p className="max-w-[480px] text-[15.5px] leading-relaxed text-navy-800">
-              Create an account and get a live rate across every carrier on the panel in under a
-              minute.
-            </p>
-            <div className="mt-1.5 flex flex-wrap justify-center gap-3.5">
-              <Link
-                href={startHref}
-                className="rounded-[8px] bg-navy-800 px-6 py-3.5 text-[14.5px] font-bold text-white transition-transform active:scale-[0.98]"
-              >
-                {session ? "Open the console" : "Create free account"}
-              </Link>
-              <Link
-                href="/track"
-                className="rounded-[8px] border-[1.5px] border-navy-800 px-6 py-3.5 text-[14.5px] font-semibold text-navy-800 transition-colors hover:bg-navy-800/10"
-              >
-                Track a shipment
-              </Link>
-            </div>
-          </div>
+          <ConsolePanel startHref={startHref} signedIn={Boolean(session)} />
         </div>
       </section>
 
-      {/* ------------------------------------------------------------ trust */}
+      {/* ------------------------------------------------------------ trust
+          Capability claims, not customer logos. Every line here is something
+          the platform actually does. */}
       <div className="border-y border-line bg-surface">
-        <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-5 px-5 py-[22px] sm:px-8">
-          <span className="text-[13px] font-medium text-ink-3">
-            Trusted for time-critical freight by teams at
-          </span>
-          <div className="flex flex-wrap gap-x-8 gap-y-2">
-            {["Started working"].map((n) => (
-              <span key={n} className="font-display text-[13px] font-bold text-ink">
-                {n}
-              </span>
-            ))}
-          </div>
+        <div className="mx-auto grid max-w-[1240px] gap-px bg-line px-0 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            ["Rated across the panel", "Every booking priced by all five carriers"],
+            ["Documents at booking", "Lorry Receipt and carton tags, before pickup"],
+            ["Scan-level tracking", "Public by LRN, no account needed"],
+            ["Charges itemised upfront", "Frozen onto the LR when you accept"],
+          ].map(([head, body]) => (
+            <div key={head} className="bg-surface px-6 py-6">
+              <p className="text-[14px] font-semibold text-ink">{head}</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-ink-3">{body}</p>
+            </div>
+          ))}
         </div>
       </div>
 

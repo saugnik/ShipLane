@@ -156,6 +156,29 @@
   --font-mono: var(--font-mono-stack), ui-monospace, "SF Mono", Menlo, monospace;
 }
 
+/*
+ * Tailwind v4 tree-shakes @theme variables that no generated utility class
+ * references. Nothing in the markup uses `font-sans` or `font-mono`, so those
+ * two tokens above are never emitted to :root — and any raw CSS rule reading
+ * var(--font-sans) resolves to nothing and silently falls back to the browser
+ * default. Body text and every document number were rendering in the system
+ * UI face rather than Inter and IBM Plex Mono because of it.
+ *
+ * These aliases are ordinary custom properties, so they survive. Raw CSS reads
+ * them; the @theme tokens above stay put purely so `font-sans` / `font-mono`
+ * remain available as utility classes.
+ *
+ * Declared on `body`, not `:root`: next/font puts --font-inter and friends on
+ * the body element, and the var() inside a custom property is substituted
+ * against the element the property is computed on. Aliasing at :root would
+ * resolve them where they do not exist and land back at square one.
+ */
+body {
+  --stack-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --stack-display: var(--font-display), var(--font-inter), ui-sans-serif, sans-serif;
+  --stack-mono: var(--font-mono-stack), ui-monospace, "SF Mono", Menlo, monospace;
+}
+
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
@@ -165,7 +188,7 @@
   body {
     background-color: var(--canvas);
     color: var(--ink);
-    font-family: var(--font-sans);
+    font-family: var(--stack-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
@@ -175,7 +198,7 @@
   h2,
   h3,
   h4 {
-    font-family: var(--font-display);
+    font-family: var(--stack-display);
     font-weight: 700;
     letter-spacing: -0.012em;
   }
@@ -186,7 +209,7 @@
 
   /* Long identifiers (LRN, AWB, GSTIN) read better spaced out in mono. */
   .docnum {
-    font-family: var(--font-mono);
+    font-family: var(--stack-mono);
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.01em;
   }
@@ -321,6 +344,66 @@
       rgb(255 255 255 / 0.06) 50%,
       transparent 100%
     );
+  }
+
+  /*
+   * ---------------------------------------------------------------- command
+   * The hero renders dark in both themes, so everything below is a fixed
+   * palette rather than a token — the surface underneath never changes.
+   */
+  .command {
+    background:
+      radial-gradient(ellipse 70% 55% at 78% 18%, rgb(255 90 31 / 0.13), transparent 62%),
+      radial-gradient(ellipse 60% 50% at 8% 8%, rgb(94 184 255 / 0.09), transparent 60%),
+      linear-gradient(180deg, #061529 0%, #08192f 55%, #0a1e38 100%);
+  }
+
+  .command-grid {
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+    background-size: 46px 46px;
+    mask-image: radial-gradient(ellipse 90% 80% at 50% 35%, #000 20%, transparent 100%);
+  }
+
+  /* City and hub names on the map. */
+  .map-label {
+    fill: #cddcf2;
+    font-family: var(--stack-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+  }
+
+  /* Dashes crawl along the lane in the direction of travel. */
+  .lane-dash {
+    animation: lane-crawl 1.1s linear infinite;
+  }
+
+  .ticker-track {
+    animation: ticker 34s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lane-dash,
+    .ticker-track {
+      animation: none;
+    }
+  }
+}
+
+@keyframes lane-crawl {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
   }
 }
 
