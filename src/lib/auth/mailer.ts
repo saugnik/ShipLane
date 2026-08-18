@@ -1,25 +1,60 @@
+import nodemailer from "nodemailer";
+// createTransport's overloads do not infer a bare object literal as SMTP
+// options, so the options are typed explicitly rather than cast away.
+import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import { BRAND } from "@/lib/brand";
 
 /**
- * OTP delivery over Mailjet.
+ * OTP delivery.
  *
- * Real email needs MAILJET_API_KEY and MAILJET_SECRET_KEY. When neither is
- * configured the code is logged server-side and echoed to the screen so a demo
- * deployment is still usable — `otpIsEchoed()` gates that, and the UI shows a
- * loud banner whenever it is on, because echoing a login code to the browser
- * means anyone who can reach the page can sign in as anyone.
+ * Two transports, chosen by whatever is configured:
  *
- * The sender address in MAIL_FROM must be a validated sender on the Mailjet
- * account; Mailjet rejects anything else outright.
+ *   google   SMTP through Google Workspace with an app password. Preferred
+ *            when shippbie.com already runs on Workspace — the domain's SPF
+ *            and DKIM authorise Google to send for it out of the box, so mail
+ *            passes DMARC with no extra DNS, no provider signup, and none of
+ *            the new-account review that gets transactional senders suspended.
+ *   mailjet  HTTP API. Kept as the fallback so switching back is an env var
+ *            rather than a code change.
+ *
+ * With neither configured the code is logged server-side and echoed to the
+ * screen so a demo deployment is still usable — `otpIsEchoed()` gates that, and
+ * the UI shows a loud banner whenever it is on, because echoing a login code to
+ * the browser means anyone who can reach the page can sign in as anyone.
  */
 
 const API = "https://api.mailjet.com/v3.1/send";
 
 const key = () => process.env.MAILJET_API_KEY?.trim() ?? "";
 const secretKey = () => process.env.MAILJET_SECRET_KEY?.trim() ?? "";
+const gmailUser = () => process.env.GMAIL_USER?.trim() ?? "";
+// Google prints app passwords in groups of four; people paste them that way.
+const gmailPassword = () => (process.env.GMAIL_APP_PASSWORD ?? "").replace(/\s+/g, "");
+
+type Provider = "google" | "mailjet" | "none";
+
+/**
+ * Which transport will actually be used.
+ *
+ * MAIL_PROVIDER forces one explicitly; otherwise Google wins when configured,
+ * because on this domain it is both better authenticated and not subject to a
+ * provider's abuse review.
+ */
+export function mailProvider(): Provider {
+  const forced = process.env.MAIL_PROVIDER?.trim().toLowerCase();
+  const googleReady = gmailUser().length > 0 && gmailPassword().length > 0;
+  const mailjetReady = key().length > 0 && secretKey().length > 0;
+
+  if (forced === "google") return googleReady ? "google" : "none";
+  if (forced === "mailjet") return mailjetReady ? "mailjet" : "none";
+
+  if (googleReady) return "google";
+  if (mailjetReady) return "mailjet";
+  return "none";
+}
 
 export function mailerConfigured(): boolean {
-  return key().length > 0 && secretKey().length > 0;
+  return mailProvider() !== "none";
 }
 
 /** True when the code is returned to the client instead of emailed. */
@@ -29,10 +64,24 @@ export function otpIsEchoed(): boolean {
   return process.env.OTP_ECHO !== "off";
 }
 
+/**
+ * The From address.
+ *
+ * Over Google SMTP this is forced to the authenticated mailbox: Gmail silently
+ * rewrites From to the account it authenticated as unless the address is a
+ * configured "Send mail as" alias, so honouring a differing MAIL_FROM would
+ * mean the logs claim one sender and the recipient sees another.
+ */
 function sender() {
+  const name = process.env.MAIL_FROM_NAME?.trim() || BRAND.name;
+
+  if (mailProvider() === "google") {
+    return { Email: gmailUser(), Name: name };
+  }
+
   return {
     Email: process.env.MAIL_FROM?.trim() || `no-reply@${BRAND.website.replace(/^www\./, "")}`,
-    Name: process.env.MAIL_FROM_NAME?.trim() || BRAND.name,
+    Name: name,
   };
 }
 
@@ -93,12 +142,82 @@ export async function deliverOtp(
   purpose: string,
 ): Promise<DeliveryResult> {
   const body = template(code, purpose);
+  const provider = mailProvider();
 
-  if (!mailerConfigured()) {
+  if (provider === "none") {
     console.info(`[auth] OTP for ${email} (${purpose}): ${code}`);
     return { ok: true };
   }
 
+  if (provider === "google") return sendViaGoogle(email, body);
+  return sendViaMailjet(email, body, purpose);
+}
+
+type Body = ReturnType<typeof template>;
+
+/**
+ * Google Workspace SMTP.
+ *
+ * Port 465 rather than 587: implicit TLS needs one round trip instead of
+ * STARTTLS's negotiation, which matters when a serverless invocation opens a
+ * fresh connection every time. Pooling is left off (the default) for the same
+ * reason — there is no long-lived process to keep a pool alive between requests.
+ *
+ * The timeouts are deliberate. A hung SMTP socket would otherwise hold the
+ * function open until the platform kills it, and the caller would learn nothing.
+ */
+async function sendViaGoogle(email: string, body: Body): Promise<DeliveryResult> {
+  const from = sender();
+
+  try {
+    const options: SMTPTransport.Options = {
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: { user: gmailUser(), pass: gmailPassword() },
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 20_000,
+    };
+    const transport = nodemailer.createTransport(options);
+
+    await transport.sendMail({
+      from: { address: from.Email, name: from.Name },
+      to: email,
+      replyTo: { address: BRAND.supportEmail, name: `${BRAND.name} support` },
+      subject: body.subject,
+      text: body.text,
+      html: body.html,
+    });
+
+    return { ok: true };
+  } catch (err) {
+    const e = err as { responseCode?: number; code?: string; message?: string };
+    console.error("[auth] Google SMTP send failed", e.code, e.responseCode, e.message);
+
+    // 535 is Gmail's "username and password not accepted" — almost always a
+    // plain account password used where an app password is required, or 2-Step
+    // Verification not enabled on the account. Worth naming, because the raw
+    // message points at a help page rather than the cause.
+    if (e.responseCode === 535 || /invalid login|username and password not accepted/i.test(e.message ?? "")) {
+      return {
+        ok: false,
+        reason: `Google rejected the sign-in for ${gmailUser()}. GMAIL_APP_PASSWORD must be a 16-character app password, not the account password, and 2-Step Verification must be on.`,
+      };
+    }
+
+    return {
+      ok: false,
+      reason: `Could not send through Google (${e.code ?? "error"}): ${e.message ?? "no detail"}`,
+    };
+  }
+}
+
+async function sendViaMailjet(
+  email: string,
+  body: Body,
+  purpose: string,
+): Promise<DeliveryResult> {
   const auth = Buffer.from(`${key()}:${secretKey()}`).toString("base64");
 
   try {
