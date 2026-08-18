@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
+  <!--
+    Favicon. Same artwork as LogoMark in src/components/Logo.tsx, but standing
+    alone: the navy tile is baked in here because there is no wrapper element,
+    and the colours are literals because CSS variables do not resolve inside an
+    icon the browser loads on its own.
+
+    Sized for 16px first. The stroke is 11% of the viewBox so the S still reads
+    as an S in a tab strip.
+  -->
+  <rect width="40" height="40" rx="9" fill="#0B2447"/>
+  <path d="M28.5 11.5C28.5 7.5 11.5 7.5 11.5 14C11.5 20.5 28.5 19.5 28.5 26C28.5 32.5 11.5 32.5 11.5 28.5"
+        fill="none" stroke="#ffffff" stroke-width="4.4" stroke-linecap="round"/>
+  <path d="M28.5 26C28.5 32.5 11.5 32.5 11.5 28.5"
+        fill="none" stroke="#FF5A1F" stroke-width="4.4" stroke-linecap="round"/>
+  <circle cx="11.5" cy="28.5" r="3.2" fill="#FF5A1F"/>
+</svg>

@@ -2,35 +2,44 @@ import { cn } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
 
 /**
- * The mark: two chevrons, one orange one white, reading as forward motion and
- * as the double-arrow of a fast-forward. Drawn rather than imported so it
- * inherits size and never ships an extra request.
+ * The mark: an S drawn as a road.
+ *
+ * The initial and the product in one shape — a route with the travelled half in
+ * white and the remaining leg in orange, the consignment sitting at the head.
+ * It replaced a double chevron, which is the single most common mark in
+ * logistics and says "fast" and nothing else.
+ *
+ * The stroke is deliberately heavy (11% of the viewBox). The mark has to hold
+ * at 16px in a browser tab, and anything finer turns to grey mush there.
+ *
+ * Drawn rather than imported so it inherits size, recolours with the theme and
+ * never costs a request. Keep this path in sync with src/app/icon.svg, which is
+ * the same artwork standing alone as the favicon.
  */
 export function LogoMark({ className, size = 38 }: { className?: string; size?: number }) {
   return (
     <span
-      className={cn(
-        "grid shrink-0 place-items-center rounded-[10px] bg-panel",
-        className,
-      )}
+      className={cn("grid shrink-0 place-items-center rounded-[10px] bg-panel", className)}
       style={{ width: size, height: size }}
       aria-hidden
     >
-      <svg width={size * 0.53} height={size * 0.53} viewBox="0 0 110 110" fill="none">
+      <svg width={size * 0.63} height={size * 0.63} viewBox="0 0 40 40" fill="none">
+        {/* The full route. */}
         <path
-          d="M32 38 L60 55 L32 72"
-          stroke="var(--color-brand-500)"
-          strokeWidth="11"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M50 38 L78 55 L50 72"
+          d="M28.5 11.5C28.5 7.5 11.5 7.5 11.5 14C11.5 20.5 28.5 19.5 28.5 26C28.5 32.5 11.5 32.5 11.5 28.5"
           stroke="#ffffff"
-          strokeWidth="11"
+          strokeWidth="4.4"
           strokeLinecap="round"
-          strokeLinejoin="round"
         />
+        {/* The leg still in transit, over the top of it. */}
+        <path
+          d="M28.5 26C28.5 32.5 11.5 32.5 11.5 28.5"
+          stroke="var(--color-brand-500)"
+          strokeWidth="4.4"
+          strokeLinecap="round"
+        />
+        {/* The consignment. */}
+        <circle cx="11.5" cy="28.5" r="3.2" fill="var(--color-brand-500)" />
       </svg>
     </span>
   );
