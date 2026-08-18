@@ -53,6 +53,30 @@ function template(code: string, purpose: string) {
   };
 }
 
+/**
+ * Digs the human-readable complaint out of a Mailjet error body.
+ *
+ * Mailjet answers in three different shapes depending on where it failed —
+ * top-level `ErrorMessage`, a per-message `Errors[]`, or a bare string — so all
+ * three are tried before falling back to the raw text.
+ */
+function mailjetReason(body: string): string {
+  try {
+    const d = JSON.parse(body) as {
+      ErrorMessage?: string;
+      Messages?: { Errors?: { ErrorMessage?: string; ErrorCode?: string }[] }[];
+    };
+    const perMessage = d.Messages?.[0]?.Errors?.map((e) =>
+      [e.ErrorCode, e.ErrorMessage].filter(Boolean).join(" "),
+    ).filter(Boolean);
+    if (perMessage?.length) return perMessage.join("; ");
+    if (d.ErrorMessage) return d.ErrorMessage;
+  } catch {
+    // Not JSON — fall through to the raw body.
+  }
+  return body.slice(0, 300).replace(/\s+/g, " ").trim() || "no detail returned";
+}
+
 export type DeliveryResult = { ok: true } | { ok: false; reason: string };
 
 /**
@@ -104,7 +128,10 @@ export async function deliverOtp(
 
     if (res.status === 401) {
       console.error("[auth] Mailjet rejected the credentials");
-      return { ok: false, reason: "The email provider rejected our credentials." };
+      return {
+        ok: false,
+        reason: `The email provider rejected our credentials (sending as ${sender().Email}).`,
+      };
     }
 
     if (!res.ok) {
@@ -112,20 +139,32 @@ export async function deliverOtp(
       if (/from.*not.*allow|sender.*not.*valid|unauthorized sender/i.test(detail)) {
         return {
           ok: false,
-          reason:
-            "Email is not fully configured yet: the sending address is not a validated sender on the Mailjet account. Add and confirm it, then set MAIL_FROM to that address.",
+          reason: `“${sender().Email}” is not a validated sender on this Mailjet account. Add and confirm it, then set MAIL_FROM to that address.`,
         };
       }
-      return { ok: false, reason: "The email provider rejected the message." };
+      // Pass the provider's own words through. A generic "rejected" tells an
+      // operator nothing, and this is the one place where the actual cause is
+      // known — Mailjet's messages name the offending field and carry no
+      // secrets. Without it, diagnosing a misconfigured deployment means
+      // guessing against a black box.
+      return {
+        ok: false,
+        reason: `Mailjet refused the message (HTTP ${res.status}, sending as ${sender().Email}): ${mailjetReason(detail)}`,
+      };
     }
 
     // 200 does not mean delivered — Mailjet reports per-message status here.
     try {
-      const payload = JSON.parse(detail) as { Messages?: { Status?: string; Errors?: unknown }[] };
-      const status = payload.Messages?.[0]?.Status;
-      if (status && status !== "success") {
+      const payload = JSON.parse(detail) as {
+        Messages?: { Status?: string; Errors?: { ErrorMessage?: string }[] }[];
+      };
+      const message = payload.Messages?.[0];
+      if (message?.Status && message.Status !== "success") {
         console.error("[auth] Mailjet accepted the request but refused the message:", detail);
-        return { ok: false, reason: "The email provider could not send to that address." };
+        return {
+          ok: false,
+          reason: `Mailjet could not send to that address (sending as ${sender().Email}): ${mailjetReason(detail)}`,
+        };
       }
     } catch {
       // Unparseable 200 — treat the HTTP status as authoritative rather than
