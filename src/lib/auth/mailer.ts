@@ -113,9 +113,23 @@ export async function deliverOtp(
           {
             From: sender(),
             To: [{ Email: email }],
+            // Replies should reach a human, not the no-reply void. Filters also
+            // read a missing Reply-To on a domain that can receive mail as a
+            // small negative signal.
+            ReplyTo: { Email: BRAND.supportEmail, Name: `${BRAND.name} support` },
             Subject: body.subject,
             TextPart: body.text,
             HTMLPart: body.html,
+            // Tracking OFF, deliberately.
+            //
+            // Click tracking rewrites every link to a Mailjet redirect domain
+            // and open tracking injects a remote pixel. On a one-time-code email
+            // that is a phishing signature — a message claiming to be from
+            // shippbie.com whose links point somewhere else — and it is the
+            // commonest reason transactional OTPs land in spam. There is nothing
+            // to track here anyway: the code is the payload.
+            TrackOpens: "disabled",
+            TrackClicks: "disabled",
             // Surfaces in Mailjet's dashboard so a failed send is traceable to
             // the flow that triggered it.
             CustomID: `otp-${purpose.toLowerCase()}`,
@@ -127,10 +141,20 @@ export async function deliverOtp(
     const detail = await res.text();
 
     if (res.status === 401) {
-      console.error("[auth] Mailjet rejected the credentials");
+      console.error("[auth] Mailjet returned 401:", detail);
+      // A 401 here is not necessarily a bad key. Mailjet also answers 401 with
+      // mj-0001 when it has suspended sending on the account, and reporting
+      // that as "wrong credentials" sends whoever is debugging it off to
+      // re-check a key that was never the problem.
+      if (/blocked|suspend/i.test(detail)) {
+        return {
+          ok: false,
+          reason: `The email provider has suspended sending on this account: ${mailjetReason(detail)}`,
+        };
+      }
       return {
         ok: false,
-        reason: `The email provider rejected our credentials (sending as ${sender().Email}).`,
+        reason: `The email provider rejected our credentials (sending as ${sender().Email}): ${mailjetReason(detail)}`,
       };
     }
 
