@@ -2,7 +2,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Loader2, MapPin, Search, TriangleAlert } from "lucide-react";
+import { Loader2, MapPin, Search } from "lucide-react";
 import {
   fetchSuggestions,
   loadGoogleMaps,
@@ -25,11 +25,24 @@ import { controlClass } from "@/components/ui/Field";
  * re-geocodes, which is also the only way to fix the many Indian addresses
  * Places knows by name but not by exact gate.
  *
- * With no API key the component degrades to a hint and hands control back to
- * the manual fields, which the PIN code lookup fills instead.
+ * With no API key the component renders nothing and hands control back to the
+ * manual fields, which the PIN code lookup fills instead.
  */
 
 const DEBOUNCE_MS = 260;
+
+/**
+ * Tell the operator once, not the customer, and not on every keystroke —
+ * the component re-renders constantly while typing.
+ */
+let mapsWarned = false;
+function warnMapsOffOnce() {
+  if (mapsWarned) return;
+  mapsWarned = true;
+  console.info(
+    "[maps] address search is off — set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to enable it. Manual entry still works.",
+  );
+}
 
 type Props = {
   /** Current street line, so the search box reflects manual edits. */
@@ -145,16 +158,13 @@ export function AddressAutocomplete({
     }
   };
 
+  // Without a Maps key the picker simply is not rendered. Manual entry below is
+  // a complete way to book, so there is nothing here the customer must act on —
+  // and a warning naming an env var is a note to the operator, not to them.
+  // The absence is logged once for whoever is running the deployment.
   if (!enabled) {
-    return (
-      <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs text-amber-700 dark:text-amber-300">
-        <TriangleAlert className="mt-px size-3.5 shrink-0" />
-        <p>
-          Map search is off — no <code className="font-mono">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>{" "}
-          is set. Type the address below; entering a PIN code fills in city and state automatically.
-        </p>
-      </div>
-    );
+    warnMapsOffOnce();
+    return null;
   }
 
   return (

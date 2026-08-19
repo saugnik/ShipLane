@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Plane, Truck, Boxes } from "lucide-react";
 
 /**
- * "Freight Command Console" — the second dark block on the home page.
+ * "Ready to deliver Console" — the second dark block on the home page.
  *
  * The isometric cartons either side are drawn from one primitive at a few
  * scales rather than imported as artwork, so the whole section stays vector,
@@ -107,7 +107,7 @@ export function ConsolePanel({ startHref, signedIn }: { startHref: string; signe
 
       <div className="relative mx-auto max-w-[620px] px-6 py-16 text-center sm:px-10 sm:py-20">
         <h2 className="text-[clamp(28px,3.4vw,44px)] leading-[1.08] text-white">
-          Freight Command{" "}
+          Ready to deliver{" "}
           <span className="text-brand-400">Console</span>
         </h2>
         <p className="mx-auto mt-4 max-w-[440px] text-[15.5px] leading-relaxed text-[#a8b7d0]">

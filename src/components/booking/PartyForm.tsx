@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Building2 } from "lucide-react";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { mapsEnabled } from "@/lib/googleMaps";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { GST_STATE_CODES, INDIAN_STATES } from "@/lib/india";
 import type { PartyForm as PartyFormState } from "@/lib/bookingState";
@@ -149,7 +150,14 @@ export function PartyForm({ side, value, onChange, errors }: Props) {
               <Textarea
                 rows={2}
                 invalid={invalid}
-                placeholder="Building, street, area — refine after picking from the map"
+                // Only mention the map when there is one — without a Maps key
+                // the picker above does not render, and telling someone to
+                // refine a search result they never saw is just confusing.
+                placeholder={
+                  mapsEnabled()
+                    ? "Building, street, area — refine after picking from the map"
+                    : "Building, street, area"
+                }
                 value={value.address}
                 onChange={(e) => set("address", e.target.value)}
               />
